@@ -8,6 +8,11 @@
 
     <div class="tight-form">
         <ul class="tight-form-list pull-right">
+            <li ng-show="target.error" class="tight-form-item">
+                <a bs-tooltip="target.error" style="color: rgb(229, 189, 28)" role="menuitem">
+                    <i class="fa fa-warning"></i>
+                </a>
+            </li>
             <li class="tight-form-item">
                 <a class="pointer" tabindex="1" ng-click="toggleQueryMode()">
                     <i class="fa fa-pencil"></i>
@@ -56,15 +61,15 @@
         <div class="clearfix"></div>
         <ul class="tight-form-list" role="menu">
             <li class="tight-form-item" style="width: 122px" ng-show="target.queryMode === 'resource'">
-                Resource id
+                Resource ID
             </li>
             <li ng-show="target.queryMode === 'resource'">
                 <input type="text"
                        class="input-large tight-form-input"
                        ng-model="target.resource_id"
                        spellcheck='false'
-                       bs-typeahead="suggestMetrics"
-                       placeholder="metric id"
+                       bs-typeahead="suggestResourceIDs"
+                       placeholder="resource id"
                        data-min-length=0 data-items=100
                        ng-model-onblur
                        ng-blur="targetBlur()"
@@ -73,14 +78,14 @@
 
 
                 <li class="tight-form-item" style="width: 122px" ng-show="target.queryMode === 'metric'">
-                    Metric id
+                    Metric ID
                 </li>
                 <li ng-show="target.queryMode === 'metric'">
                     <input type="text"
                            class="input-large tight-form-input"
                            ng-model="target.metric_id"
                            spellcheck='false'
-                           bs-typeahead="suggestMetrics"
+                           bs-typeahead="suggestMetricIDs"
                            placeholder="metric id"
                            data-min-length=0 data-items=100
                            ng-model-onblur
@@ -109,7 +114,7 @@
                                    class="input-large tight-form-input"
                                    ng-model="target.metric_name"
                                    spellcheck='false'
-                                   bs-typeahead="suggestMetricsName"
+                                   bs-typeahead="suggestMetricNames"
                                    placeholder="metric name"
                                    data-min-length=0 data-items=100
                                    ng-model-onblur
@@ -140,12 +145,6 @@
                                        ng-blur="targetBlur()"
                                        >
                             </li>
-                                <li ng-show="target.errors">
-                                    <a bs-tooltip="target.errors" style="color: rgb(229, 189, 28)"
-                                        <i class="fa fa-warning"></i>
-                                    </a>
-                                </li>
-
         </ul>
 
         <div class="clearfix"></div>

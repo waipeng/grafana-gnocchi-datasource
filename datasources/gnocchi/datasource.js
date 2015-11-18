@@ -1,11 +1,12 @@
 define([
   'angular',
   'lodash',
-  'kbn',
   'moment',
-  './queryCtrl',
+  'app/core/utils/datemath',
+  './directives',
+  './query_ctrl',
 ],
-function (angular, _, kbn, moment) {
+function (angular, _, moment, dateMath) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -19,6 +20,7 @@ function (angular, _, kbn, moment) {
 
     function GnocchiDatasource(datasource) {
       this.type = 'gnocchi';
+      this.supportMetrics = true;
       this.name = datasource.name;
 
       this.default_headers = {
@@ -40,9 +42,6 @@ function (angular, _, kbn, moment) {
         this.url = sanitize_url(datasource.url);
         this.keystone_endpoint = null;
       }
-
-      this.supportMetrics = true;
-      this.editorSrc = 'app/features/gnocchi/partials/query.editor.html';
     }
 
     ////////////////
@@ -50,88 +49,176 @@ function (angular, _, kbn, moment) {
     ////////////////
 
     GnocchiDatasource.prototype.query = function(options) {
-      if (this.keystone_endpoint === null){
-        return this.do_query(options);
-      } else {
-        var deferred = $q.defer();
-        var self = this;
-        this.ensure_authentified(deferred, function() {
-          return self.do_query(options);
-        });
-        return deferred.promise;
-      }
+      var _this = this;
+      var promises = _.map(options.targets, function(target) {
+        // Ensure target is valid
+        var default_measures_req = {
+          params: {
+            'aggregation': target.aggregator,
+            'start': options.range.from.toISOString()
+          }
+        };
+        if (options.range.to){
+          default_measures_req.params.end = options.range.to.toISOString();
+        }
+
+        var error = _this.validateTarget(target, true);
+        if(error) {
+          // no need to $q.reject() here, error is already printed by the queryCtrl
+          console.log("target is not yet valid: " + error);
+          return $q.when([]);
+        }
+        var metric_name;
+        var resource_search;
+        var resource_type;
+        var resource_id;
+        var metric_id;
+        var label;
+
+        try {
+          metric_name = templateSrv.replace(target.metric_name);
+          resource_search = templateSrv.replace(target.resource_search);
+          resource_type = templateSrv.replace(target.resource_type);
+          resource_id = templateSrv.replace(target.resource_id);
+          metric_id = templateSrv.replace(target.metric_id);
+          label = templateSrv.replace(target.label);
+        } catch (err) {
+          return $q.reject(err);
+        }
+
+        resource_type = resource_type || "generic";
+
+        if (target.queryMode === "resource_search") {
+          var resource_search_req = {
+            url: 'v1/search/resource/' + resource_type,
+            method: 'POST',
+            data: resource_search
+          };
+          return _this._gnocchi_request(resource_search_req).then(function(result) {
+            return $q.all(_.map(result, function(resource) {
+              var measures_req = _.merge({}, default_measures_req);
+              measures_req.url = ('v1/resource/' + resource_type +
+                                  '/' + resource["id"] + '/metric/' + metric_name + '/measures');
+              return _this._retrieve_measures(resource[label] || label, measures_req);
+            }));
+          });
+        } else if (target.queryMode === "resource_aggregation") {
+          default_measures_req.url = ('v1/aggregation/resource/' +
+                                      resource_type + '/metric/' + metric_name);
+          default_measures_req.method = 'POST';
+          default_measures_req.data = target.resource_search;
+          return _this._retrieve_measures(label || "unlabeled", default_measures_req);
+
+        } else if (target.queryMode === "resource") {
+          var resource_req = {
+            url: 'v1/resource/' + resource_type+ '/' + resource_id,
+            method: 'GET'
+          };
+
+          return _this._gnocchi_request(resource_req).then(function(resource) {
+            label = resource[label] || label;
+            if (!label) { label = resource_id ; }
+            default_measures_req.url = ('v1/resource/' + resource_type+ '/' +
+                                        resource_id + '/metric/' + metric_name+ '/measures');
+            return _this._retrieve_measures(label, default_measures_req);
+          });
+        } else if (target.queryMode === "metric") {
+          default_measures_req.url = 'v1/metric/' + metric_id + '/measures';
+          return _this._retrieve_measures(metric_id, default_measures_req);
+        }
+      });
+
+      return $q.all(promises).then(function(results) {
+        return { data: _.flatten(results) };
+      });
     };
 
-    GnocchiDatasource.prototype.performSuggestQuery = function(query, type) {
-      // handle only type == 'metrics'
-      var options = {
-          method: 'GET',
-          headers: this.default_headers,
-      };
+    GnocchiDatasource.prototype._retrieve_measures = function(name, reqs) {
+      return this._gnocchi_request(reqs).then(function(result) {
+        var dps = [];
+        _.each(result.sort(), function(metricData) {
+          dps.push([metricData[2], dateMath.parse(metricData[0]).valueOf()]);
+        });
+        return { target: name, datapoints: dps };
+      });
+    };
+
+    GnocchiDatasource.prototype.performSuggestQuery = function(query, type, target) {
+      var options = {};
       var attribute = "id";
-      if (type === 'metrics') {
-        options.url = this.url + 'v1/metric';
-      }
-      return backendSrv.datasourceRequest(options).then(function(result) {
-        return _.map(result.data, function(item) {
+      var getter = function(result) {
+        return _.map(result, function(item) {
           return item[attribute];
         });
-      });
+      };
+
+      if (type === 'metrics') {
+        options.url = 'v1/metric';
+
+      } else if (type === 'resources') {
+        options.url = 'v1/resource/generic';
+
+      } else if (type === 'metric_names') {
+        if (target.queryMode === "resource" && target.resource_id !== "") {
+          options.url = 'v1/resource/generic/' + target.resource_id;
+          getter = function(result) {
+            return Object.keys(result["metrics"]);
+          };
+        } else{
+          return $q.when([]);
+        }
+      } else {
+        return $q.when([]);
+      }
+      return this._gnocchi_request(options).then(getter);
     };
 
-    GnocchiDatasource.prototype.metricFindQuery = function(info) {
-      info = angular.fromJson(info);
-      console.log(info);
-      var query;
-      try {
-        query = templateSrv.replace(angular.toJson(info.query));
-      } catch (err) {
-        return $q.reject(err);
-      }
-      console.log(query);
-
-      var resource_search_req = {
-        url: this.url + 'v1/search/resource/generic',
-        method: 'POST',
-        headers: this.default_headers,
-        data: query,
-      };
-      return backendSrv.datasourceRequest(resource_search_req).then(function(result) {
-        return _.map(result.data, function(resource) {
-          return {
-            text: resource[info.field],
-            expandable: false,
-          };
+    GnocchiDatasource.prototype.metricFindQuery = function(query) {
+      var req = { method: 'POST' };
+      var resourceQuery = query.match(/^resources\(([^,]*),\s?([^,]*),\s?([^\)]+?)\)/);
+      if (resourceQuery) {
+        try {
+          // Ensure this is json
+          req.data = templateSrv.replace(angular.toJson(angular.fromJson(resourceQuery[3])));
+          req.url = templateSrv.replace('v1/search/resource/' + resourceQuery[1]);
+        } catch (err) {
+          return $q.reject(err);
+        }
+        return this._gnocchi_request(req).then(function(result) {
+          return _.map(result, function(resource) {
+            return { text: resource[resourceQuery[2]] };
+          });
         });
-      });
+      }
+
+      var metricsQuery = query.match(/^metrics\(([^\)]+?)\)/);
+      if (metricsQuery) {
+        try {
+          req.method = 'GET';
+          req.url = 'v1/resource/generic/' + templateSrv.replace(metricsQuery[1]);
+        } catch (err) {
+          return $q.reject(err);
+        }
+        return this._gnocchi_request(req).then(function(resource) {
+          return _.map(Object.keys(resource["metrics"]), function(m) {
+            return { text: m };
+          });
+        });
+      }
+
+      return $q.when([]);
     };
 
     GnocchiDatasource.prototype.testDatasource = function() {
-      if (this.keystone_endpoint === null){
-        return this.do_testDatasource();
-      } else {
-        var deferred = $q.defer();
-        var self = this;
-        this.ensure_authentified(deferred, function() {
-          return self.do_testDatasource();
-        });
-        return deferred.promise;
-      }
-    };
-
-    GnocchiDatasource.prototype.do_testDatasource = function() {
-      var resource_search_req = {
-        url: this.url,
-        method: 'GET',
-        headers: this.default_headers,
-      };
-      return backendSrv.datasourceRequest(resource_search_req).then(function (result) {
-        if (result.status === 200){
-          return { status: "success", message: "Data source is working", title: "Success" };
-        } else if (result.status === 401) {
-          return { status: "failure", message: "Data source authentification fail", title: "Failure" };
+      return this._gnocchi_request({}).then(function () {
+        return { status: "success", message: "Data source is working", title: "Success" };
+      }, function(reason) {
+        if (reason.status === 401) {
+          return { status: "error", message: "Data source authentification fail", title: "Error" };
+        } else if (reason.message) {
+          return { status: "error", message: reason.message, title: "Error" };
         } else {
-          return { status: "failure", message: "Data source won't work:" + result.data, title: "Failure" };
+          return { status: "error", message: reason, title: "Error" };
         }
       });
     };
@@ -142,205 +229,61 @@ function (angular, _, kbn, moment) {
 
     GnocchiDatasource.prototype.validateSearchTarget = function(target) {
       var resource_search_req = {
-        url: this.url + 'v1/search/resource/' + (target.resource_type || 'generic'),
+        url: 'v1/search/resource/' + (target.resource_type || 'generic'),
         method: 'POST',
-        headers: this.default_headers,
         data: target.resource_search,
       };
-      return backendSrv.datasourceRequest(resource_search_req);
+      return this._gnocchi_request(resource_search_req);
     };
-
-    GnocchiDatasource.prototype.do_query = function(options) {
-      var self = this;
-      var promises = _.map(options.targets, function(target) {
-        var default_measures_req = {
-          method: 'GET',
-          headers: this.default_headers,
-          params: {
-            'aggregation': target.aggregator,
-            'start': to_iso8601(options.range.from),
-          }
-        };
-        if (options.range.to){
-          default_measures_req.params.end = to_iso8601(options.range.to);
-        }
-
-        if (target.queryMode === "resource_search") {
-          var resource_search;
-          try {
-            resource_search = templateSrv.replace(target.resource_search);
-          } catch (err) {
-            return $q.reject(err);
-          }
-          var resource_search_req = {
-            url: self.url + 'v1/search/resource/' + (target.resource_type || 'generic'),
-            method: 'POST',
-            headers: self.default_headers,
-            data: resource_search,
-          };
-          return backendSrv.datasourceRequest(resource_search_req).then(function(result) {
-            var promise = _.map(result.data, function(resource) {
-              var metric_name;
-              try {
-                metric_name = templateSrv.replace(target.metric_name);
-              } catch (err) {
-                return $q.reject(err);
-              }
-
-              var resource_type;
-              try {
-                resource_type = templateSrv.replace(target.resource_type);
-              } catch (err) {
-                return $q.reject(err);
-              }
-
-              var label;
-              try {
-                label = templateSrv.replace(target.label);
-              } catch (err) {
-                return $q.reject(err);
-              }
-
-              var measures_req = _.merge({}, default_measures_req);
-              measures_req.url = (self.url + 'v1/resource/' + (resource_type || 'generic') +
-                                  '/' + resource["id"] + '/metric/' + metric_name + '/measures');
-              var nlabel = resource[label];
-              if (nlabel) {
-                label = nlabel;
-              }
-              return retrieve_measures(label, measures_req);
-            }, this);
-            return $q.all(promise).then(function(measures) {
-              return measures;
-            });
-          });
-        } else if (target.queryMode === "resource_aggregation") {
-          var metric_name;
-          try {
-            metric_name = templateSrv.replace(target.metric_name);
-          } catch (err) {
-            return $q.reject(err);
-          }
-
-          var resource_type;
-          try {
-            resource_type = templateSrv.replace(target.resource_type);
-          } catch (err) {
-            return $q.reject(err);
-          }
-
-          var label;
-          try {
-            label = templateSrv.replace(target.label);
-          } catch (err) {
-            return $q.reject(err);
-          }
-
-          default_measures_req.url = (self.url + 'v1/aggregation/resource/' +
-                                      (resource_type || 'generic') + '/metric/' + metric_name);
-          default_measures_req.method = 'POST';
-          default_measures_req.data = target.resource_search;
-          return retrieve_measures(label || "unlabeled", default_measures_req);
-
-        } else if (target.queryMode === "resource") {
-          var metric_name;
-          try {
-            metric_name = templateSrv.replace(target.metric_name);
-          } catch (err) {
-            return $q.reject(err);
-          }
-
-          var resource_type;
-          try {
-            resource_type = templateSrv.replace(target.resource_type);
-          } catch (err) {
-            return $q.reject(err);
-          }
-
-          var resource_id;
-          try {
-            resource_id = templateSrv.replace(target.resource_id);
-          } catch (err) {
-            return $q.reject(err);
-          }
-
-          var label;
-          try {
-            label = templateSrv.replace(target.label);
-          } catch (err) {
-            return $q.reject(err);
-          }
-
-          if (!label) {
-            label = resource_id;
-          }
-          default_measures_req.url = (self.url + 'v1/resource/' + resource_type + '/' +
-                                      resource_id + '/metric/' + metric_name+ '/measures');
-          return retrieve_measures(label, default_measures_req);
-
-        } else if (target.queryMode === "metric") {
-
-          var metric_id;
-          try {
-            metric_id = templateSrv.replace(target.metric_id);
-          } catch (err) {
-            return $q.reject(err);
-          }
-          default_measures_req.url = self.url + 'v1/metric/' + metric_id + '/measures';
-          return retrieve_measures(metric_id, default_measures_req);
-        }
-      }, this);
-      return $q.all(promises).then(function(results) {
-        return { data: _.flatten(results) };
-      });
-    };
-
-    function retrieve_measures(name, reqs) {
-      return backendSrv.datasourceRequest(reqs).then(function(result) {
-        var dps = [];
-        _.each(result.data.sort(), function(metricData) {
-          dps.push([metricData[2], to_utc_epoch_seconds(metricData[0])]);
-        });
-        return { target: name, datapoints: dps };
-      });
-    }
 
     //////////////////////
     /// Utils
     //////////////////////
 
-    function to_utc_epoch_seconds(date) {
-      date = kbn.parseDate(date);
-      return date.getTime();
-    }
-
-    // Convert grafana format to gnocchi format
-    function to_iso8601(date) {
-      var parsed_date;
-      if (_.isString(date)) {
-        if (date === 'now') {
-          parsed_date = moment.utc();
-        } else if (date.indexOf('now') >= 0) {
-          parsed_date = moment.utc();
-          var delta = date.substring(3);
-          var method;
-          if (delta.indexOf('-') === 0) {
-            delta = delta.substring(1);
-            method = function(a, u) { parsed_date.subtract(a, u); };
-          } else {
-            method = function(a, u) { parsed_date.add(a, u); };
+    GnocchiDatasource.prototype.validateTarget = function(target, syntax_only) {
+      var mandatory = [];
+      switch(target.queryMode) {
+        case "metric":
+          if (target.metric_id === "") {
+            mandatory.push("Metric ID");
           }
-          var amount = parseInt(delta.slice(0, delta.length-1));
-          var unit = delta.slice(delta.length-1, delta.length);
-          method(amount, unit);
-        } else {
-          parsed_date = moment.utc(kbn.parseDate(date));
-        }
-      } else {
-        parsed_date = moment.utc(date);
+          break;
+        case "resource":
+          if (target.resource_id === "") {
+            mandatory.push("Resource ID");
+          }
+          if (target.metric_name === "") {
+            mandatory.push("Metric name");
+          }
+          break;
+        case "resource_aggregation":
+        case "resource_search":
+          if (target.resource_search === "") {
+            mandatory.push("Query");
+          }
+          if (target.metric_name === "") {
+            mandatory.push("Metric name");
+          }
+          break;
+        default:
+          break;
       }
-      return parsed_date.toISOString();
-    }
+      if (mandatory.length > 0) {
+        return "Missing or invalid fields: " + mandatory.join(", ");
+      } else if (syntax_only) {
+        return;
+      }
+
+      switch(target.queryMode) {
+        case "resource_aggregation":
+        case "resource_search":
+          this.validateSearchTarget(target).then(undefined, function(result) {
+            return result.message;
+          });
+          break;
+      }
+      return;
+    };
 
     function sanitize_url(url) {
       if (url[url.length - 1] !== '/') {
@@ -354,23 +297,56 @@ function (angular, _, kbn, moment) {
     /// KEYSTONE STUFFS
     //////////////////////
 
-    GnocchiDatasource.prototype.ensure_authentified = function(deferred, callback) {
-      var self = this;
-      if (self.url == null){
-        return self.get_token(callback);
+    GnocchiDatasource.prototype._gnocchi_request = function(additional_options) {
+      var deferred = $q.defer();
+      var _this = this;
+      this._gnocchi_auth_request(deferred, function() {
+        var options = {
+          url: "",
+          method: 'GET',
+          headers: _this.default_headers,
+        };
+        angular.merge(options, additional_options);
+        if (_this.url){
+          options.url = _this.url + options.url;
+        }
+        return backendSrv.datasourceRequest(options).then(function(response) {
+          deferred.resolve(response.data);
+        });
+      }, true);
+      return deferred.promise;
+    };
+
+    GnocchiDatasource.prototype._gnocchi_auth_request = function(deferred, callback, retry) {
+      var _this = this;
+      if (this.keystone_endpoint !== null && this.url === null){
+        this._keystone_auth_request(deferred, callback);
       } else {
-        return callback().then(undefined, function(reason) {
-          if (reason.status === 401) {
-            return self.get_token(callback);
-          } else if (reason.status !== 0 || reason.status >= 300) {
-            reason.message = 'Gnocchi Error: ' + reason.message;
+        callback().then(undefined, function(reason) {
+          if (reason.status === 0){
+            reason.message = "Gnocchi error: Connection failed";
+            deferred.reject(reason);
+          } else if (reason.status === 401) {
+            if (_this.keystone_endpoint !== null && retry){
+              _this._keystone_auth_request(deferred, callback);
+            } else {
+              deferred.reject({'message': "Gnocchi authentication failure"});
+            }
+          } else if (reason.status === 404) {
+            reason.message = "Metric not found: " + reason.data.replace(/<[^>]+>/gm, '').replace(/404 Not Found/gm, ""); // Strip html tag
+            deferred.reject(reason);
+          } else if (reason.status === 400) {
+            reason.message = "Malformed query: " + reason.data.replace(/<[^>]+>/gm, '').replace(/400 Bad Request/gm, ""); // Strip html tag
+            deferred.reject(reason);
+          } else if (reason.status >= 300) {
+            reason.message = 'Gnocchi error: ' + reason.data.replace(/<[^>]+>/gm, '');  // Strip html tag
             deferred.reject(reason);
           }
         });
       }
     };
 
-    GnocchiDatasource.prototype.get_token = function(callback) {
+    GnocchiDatasource.prototype._keystone_auth_request = function(deferred, callback) {
       var options = {
         method: 'POST',
         headers: {
@@ -398,23 +374,34 @@ function (angular, _, kbn, moment) {
           }
         }
       };
-      var self = this;
+      var _this = this;
       backendSrv.datasourceRequest(options).then(function(result) {
-        if (result.status !== 201) {
-          console.log("Invalid credential");
-          return;
-        }
-        self.default_headers['X-Auth-Token'] = result.headers('X-Subject-Token');
+        _this.default_headers['X-Auth-Token'] = result.headers('X-Subject-Token');
         _.each(result.data['token']['catalog'], function(service) {
           if (service['type'] === 'metric') {
             _.each(service['endpoints'], function(endpoint) {
               if (endpoint['interface'] === 'public') {
-                self.url = sanitize_url(endpoint['url']);
-                callback();
+                _this.url = sanitize_url(endpoint['url']);
               }
             });
           }
         });
+        if (_this.url) {
+          _this._gnocchi_auth_request(deferred, callback, false);
+        } else {
+          deferred.reject({'message': "'metric' endpoint not found in Keystone catalog"});
+        }
+      }, function(reason) {
+        var message;
+        if (reason.status === 0){
+          message = "Connection failed";
+        } else {
+          message = '(' + reason.status + ' ' + reason.statusText + ') ';
+          if (reason.data && reason.data.error) {
+            message += ' ' + reason.data.error.message;
+          }
+        }
+        deferred.reject({'message': 'Keystone failure: ' + message});
       });
     };
 

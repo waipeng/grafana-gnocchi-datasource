@@ -8,9 +8,9 @@
   "module": "plugins/datasource/gnocchi/datasource",
 
   "partials": {
-    "config": "app/plugins/datasource/gnocchi/partials/config.html",
-    "query": "app/plugins/datasource/gnocchi/partials/query.editor.html"
+    "config": "app/plugins/datasource/gnocchi/partials/config.html"
   },
 
-  "metrics": true
+  "metrics": true,
+  "annotations": false
 }

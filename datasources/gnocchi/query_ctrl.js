@@ -24,23 +24,34 @@ function (angular, _) {
       });
 
       if (!$scope.target.queryMode) {
-        //$scope.target.queryMode = "resource_search";
-        $scope.target.queryMode = "resource_aggregation";
+        $scope.target.queryMode = "resource_search";
       }
-      validateTarget($scope.target);
+      $scope.target.error = $scope.datasource.validateTarget($scope.target);
     };
 
-    $scope.suggestMetrics = function(query, callback) {
+    $scope.suggestMetricIDs = function(query, callback) {
       $scope.datasource
-        .performSuggestQuery(query, 'metrics')
+        .performSuggestQuery(query, 'metrics', $scope.target)
+        .then(callback);
+    };
+
+    $scope.suggestResourceIDs = function(query, callback) {
+      $scope.datasource
+        .performSuggestQuery(query, 'resources', $scope.target)
+        .then(callback);
+    };
+
+    $scope.suggestMetricNames = function(query, callback) {
+      $scope.datasource
+        .performSuggestQuery(query, 'metric_names', $scope.target)
         .then(callback);
     };
 
     $scope.targetBlur = function() {
-      validateTarget($scope.target);
+      $scope.target.error = $scope.datasource.validateTarget($scope.target);
 
       // this does not work so good
-      if (!_.isEqual($scope.oldTarget, $scope.target) && _.isEmpty($scope.target.errors)) {
+      if (!_.isEqual($scope.oldTarget, $scope.target) && _.isEmpty($scope.target.error)) {
         $scope.oldTarget = angular.copy($scope.target);
         $scope.get_data();
       }
@@ -58,32 +69,5 @@ function (angular, _) {
       $scope.target.queryMode = mode[index];
     };
 
-    function validateTarget(target) {
-      switch(target.queryMode) {
-        case "resource_aggregation":
-        case "resource_search":
-          $scope.datasource.validateSearchTarget(target).then(function(result) {
-            switch(result.status) {
-              case 401:
-                target.errors = "Datasource authentification failed";
-                break;
-              case 400:
-                target.errors = 'Client error: ' + result;
-                break;
-              case 200:
-                target.errors = null;
-                break;
-              default:
-                target.errors = "Unknown errors: " + result.data;
-                break;
-            }
-          });
-          break;
-        default:
-          break;
-      }
-    }
-
   });
-
 });
