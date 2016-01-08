@@ -1,10 +1,7 @@
 
-///<amd-dependency path="../datasource" />
-///<amd-dependency path="test/specs/helpers" name="helpers" />
-
+import "../datasource";
 import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
-
-declare var helpers: any;
+import helpers from 'test/specs/helpers';
 
 describe('GnocchiQueryCtrl', function() {
   var serv_ctx = new helpers.ServiceTestContext();
