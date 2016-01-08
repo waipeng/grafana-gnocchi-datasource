@@ -7,8 +7,11 @@ import helpers from 'test/specs/helpers';
 describe('GnocchiDatasource', function() {
   var ctx = new helpers.ServiceTestContext();
 
+  beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
+
   beforeEach(ctx.createService('GnocchiDatasource'));
+
   beforeEach(function() {
     ctx.ds = new ctx.service({ url: [''], jsonData: {token: 'XXXXXXXXXXXXX'} });
   });

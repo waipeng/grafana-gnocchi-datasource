@@ -7,11 +7,12 @@ describe('GnocchiQueryCtrl', function() {
   var serv_ctx = new helpers.ServiceTestContext();
   var ctx = new helpers.ControllerTestContext();
 
+  beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.controllers'));
   beforeEach(angularMocks.module('grafana.services'));
-  beforeEach(ctx.providePhase());
   beforeEach(ctx.createControllerPhase('GnocchiQueryCtrl'));
   beforeEach(serv_ctx.createService('GnocchiDatasource'));
+
   beforeEach(function() {
     serv_ctx.ds = new serv_ctx.service({ url: [''], jsonData: {token: 'XXXXXXXXXXXXX'} });
     ctx.scope.target = {};

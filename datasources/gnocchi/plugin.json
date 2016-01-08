@@ -5,7 +5,7 @@
   "type": "gnocchi",
   "serviceName": "GnocchiDatasource",
 
-  "module": "plugins/datasource/gnocchi/datasource",
+  "module": "app/plugins/datasource/gnocchi/datasource",
 
   "partials": {
     "config": "app/plugins/datasource/gnocchi/partials/config.html"
