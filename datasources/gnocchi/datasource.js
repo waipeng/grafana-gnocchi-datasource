@@ -2,11 +2,10 @@ define([
   'angular',
   'lodash',
   'moment',
-  'app/core/utils/datemath',
   './directives',
   './query_ctrl',
 ],
-function (angular, _, moment, dateMath) {
+function (angular, _, moment) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -136,9 +135,40 @@ function (angular, _, moment, dateMath) {
     GnocchiDatasource.prototype._retrieve_measures = function(name, reqs) {
       return this._gnocchi_request(reqs).then(function(result) {
         var dps = [];
-        _.each(result.sort(), function(metricData) {
-          dps.push([metricData[2], dateMath.parse(metricData[0]).valueOf()]);
+        var fill_with_zero = true;
+        var last_granularity;
+        var last_timestamp;
+        var last_value;
+        // NOTE(sileht): sample are ordered by granularity, then timestamp.
+        _.each(result, function(metricData) {
+          var granularity = metricData[1];
+          var timestamp = moment(metricData[0], moment.ISO_8601);
+          var value = metricData[2];
+
+          if (!fill_with_zero) {
+            dps.push([value, timestamp.valueOf()]);
+          } else {
+            if (last_timestamp !== undefined){
+              // We got a more precise granularity
+              if (last_timestamp.valueOf() >= timestamp.valueOf()){
+                return;
+              }
+              var c_timestamp = last_timestamp;
+              while (c_timestamp.valueOf() < timestamp.valueOf()) {
+                dps.push([last_value, c_timestamp.valueOf()]);
+                c_timestamp.add(last_granularity, "seconds");
+                last_granularity = granularity;
+                last_value = 0;
+              }
+            }
+            last_timestamp = timestamp;
+            last_granularity = granularity;
+            last_value = value;
+          }
         });
+        if (fill_with_zero) {
+          dps.push([last_value, last_timestamp.valueOf()]);
+        }
         return { target: name, datapoints: dps };
       });
     };

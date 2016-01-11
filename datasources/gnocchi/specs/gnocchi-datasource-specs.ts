@@ -29,9 +29,11 @@ describe('GnocchiDatasource', function() {
     var results;
     beforeEach(function() {
       ctx.$httpBackend.expect(method, url, data, headers).respond([
-        ["2014-10-06T14:33:57", "60.0", "43.1"],
-        ["2014-10-06T14:34:12", "60.0", "12"],
-        ["2014-10-06T14:34:20", "60.0", "2"]
+        ["2014-10-06T14:00:00", "600.0", "7"],
+        ["2014-10-06T14:20:00", "600.0", "5"],
+        ["2014-10-06T14:33:00", "60.0", "43.1"],
+        ["2014-10-06T14:34:00", "60.0", "12"],
+        ["2014-10-06T14:36:00", "60.0", "2"]
       ]);
       ctx.ds.query(query).then(function(data) { results = data; });
       ctx.$httpBackend.flush();
@@ -45,12 +47,18 @@ describe('GnocchiDatasource', function() {
     it('should return series list', function() {
       expect(results.data.length).to.be(1);
       expect(results.data[0].target).to.be(label);
-      expect(results.data[0].datapoints[0][0]).to.be('43.1');
-      expect(results.data[0].datapoints[0][1]).to.be(1412606037000);
-      expect(results.data[0].datapoints[1][0]).to.be('12');
-      expect(results.data[0].datapoints[1][1]).to.be(1412606052000);
-      expect(results.data[0].datapoints[2][0]).to.be('2');
-      expect(results.data[0].datapoints[2][1]).to.be(1412606060000);
+      expect(results.data[0].datapoints).to.eql([
+        [ '7', 1412604000000 ],
+        [ 0, 1412604600000 ],
+        [ '5', 1412605200000 ],
+        [ 0, 1412605800000 ],
+        [ 0, 1412605860000 ],
+        [ 0, 1412605920000 ],
+        [ '43.1', 1412605980000 ],
+        [ '12', 1412606040000 ],
+        [ 0, 1412606100000 ],
+        [ '2', 1412606160000 ]]
+      );
     });
 
   }
