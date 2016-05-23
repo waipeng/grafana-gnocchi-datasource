@@ -1,0 +1,42 @@
+<datasource-http-settings current="ctrl.current">
+</datasource-http-settings>
+
+<h3>Gnocchi Details</h3>
+<div class="gf-info-box" style="margin: 30px 0 0 0">
+If you plan to use the proxy mode, use the Gnocchi URL and fill the Token
+</div>
+
+<div class="gf-form-group">
+    <div class="gf-form-inline">
+        <div class="gf-form max-width-30">
+            <span class="gf-form-label width-7">Token</span>
+            <input type="text" class="tight-form-input input-xlarge" ng-model='ctrl.current.jsonData.token' placeholder=""></input>
+        </div>
+    </div>
+</div>
+
+<div class="gf-info-box" style="margin: 30px 0 0 0">
+        If you plan to use the direct mode, use the Keystone URL and fill the Project, User and Password<br>
+        In this mode, Gnocchi and Keystone MUST have CORS configured correctly on the server side.
+</div>
+
+<div class="gf-form-group">
+    <div class="gf-form-inline">
+        <div class="gf-form max-width-30">
+            <span class="gf-form-label width-7">Project</span>
+            <input type="text" class="tight-form-input input-xlarge" ng-model='ctrl.current.jsonData.project' placeholder=""></input>
+        </div>
+    </div>
+    <div class="gf-form-inline">
+        <div class="gf-form max-width-30">
+            <span class="gf-form-label width-7">User</span>
+            <input type="text" class="tight-form-input input-xlarge" ng-model='ctrl.current.jsonData.username' placeholder=""></input>
+        </div>
+    </div>
+    <div class="gf-form-inline">
+        <div class="gf-form max-width-30">
+            <span class="gf-form-label width-7">Password</span>
+            <input type="text" class="tight-form-input input-xlarge" ng-model='ctrl.current.jsonData.password' placeholder=""></input>
+        </div>
+    </div>
+</div>
