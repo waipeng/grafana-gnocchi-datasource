@@ -19,7 +19,6 @@ module.exports = function(config) {
       'node_modules/angular/angular.js',
       'node_modules/angular-mocks/angular-mocks.js',
       'node_modules/lodash/lodash.js',
-      'karma-test-shim.js',
       'dist/specs/gnocchi-datasource-specs.js',
     ],
 
