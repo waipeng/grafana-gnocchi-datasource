@@ -13,7 +13,6 @@ export default class GnocchiDatasource {
     url: string;
     keystone_endpoint: string;
 
-    /** @ngInject */
     constructor(instanceSettings, private $q, private backendSrv, private templateSrv) {
       var self = this;
 
@@ -346,13 +345,19 @@ export default class GnocchiDatasource {
       var deferred = self.$q.defer();
       self._gnocchi_auth_request(deferred, function() {
         var options = {
-          url: "",
-          method: 'GET',
-          headers: self.default_headers,
+          url: null,
+          method: null,
+          headers: null
         };
         angular.merge(options, additional_options);
         if (self.url){
           options.url = self.url + options.url;
+        }
+        if (!options.method) {
+          options.method = 'GET';
+        }
+        if (!options.headers) {
+          options.headers = self.default_headers;
         }
         return self.backendSrv.datasourceRequest(options).then(function(response) {
           deferred.resolve(response.data);
