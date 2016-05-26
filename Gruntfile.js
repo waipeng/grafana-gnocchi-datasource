@@ -29,7 +29,7 @@ module.exports = function(grunt) {
     },
 
     tslint: {
-      source: { files: { src: ['src/**/.ts'] }},
+      source: { files: { src: ['src/**/*.ts'] }},
       options: { configuration: 'tslint.json' }
     },
 

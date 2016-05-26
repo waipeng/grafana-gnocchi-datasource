@@ -3,7 +3,7 @@
 import {Datasource} from "../module";
 import * as Q from "q";
 import * as moment from "moment";
-import * as angular from "angular"
+import * as angular from "angular";
 
 describe('GnocchiDatasource', function() {
   var ctx = {
@@ -15,7 +15,7 @@ describe('GnocchiDatasource', function() {
   };
 
   beforeEach(angular.mock.inject(function($injector) {
-    ctx.$q = Q
+    ctx.$q = Q;
     ctx.$httpBackend = $injector.get('$httpBackend');
     ctx.backendSrv = {};
     ctx.templateSrv = {};

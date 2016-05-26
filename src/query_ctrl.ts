@@ -21,7 +21,7 @@ export class GnocchiDatasourceQueryCtrl  {
         {text: 'Aggregated measurements of a metric across resources', value: 'resource_aggregation'},
         {text: 'Measurements of a metric of a resource', value: 'resource'},
         {text: 'Measurements of a metric', value: 'metric'}
-    ]
+    ];
 
     if (!this.target.refId) {
         this.target.refId = this.getNextQueryLetter();
@@ -37,7 +37,7 @@ export class GnocchiDatasourceQueryCtrl  {
 
     this.target.validQuery = false;
     this.target.queryError = 'No query';
-    this.queryUpdated()
+    this.queryUpdated();
   }
   suggestResourceIDs(query, callback) {
     this.datasource
@@ -47,8 +47,8 @@ export class GnocchiDatasourceQueryCtrl  {
 
   queryUpdated() {
     this.target.queryError = this.datasource.validateTarget(this.target, false);
-    this.target.validQuery = !this.target.queryError
-    this.refresh()
+    this.target.validQuery = !this.target.queryError;
+    this.refresh();
   }
 
   /*

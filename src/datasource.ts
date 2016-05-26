@@ -66,7 +66,7 @@ export default class GnocchiDatasource {
         }
 
         var error = self.validateTarget(target, true);
-        if(error) {
+        if (error) {
           // no need to self.$q.reject() here, error is already printed by the queryCtrl
           // console.log("target is not yet valid: " + error);
           return self.$q.when([]);
@@ -137,7 +137,7 @@ export default class GnocchiDatasource {
     }
 
     _retrieve_measures(name, reqs) {
-      var self = this
+      var self = this;
       return self._gnocchi_request(reqs).then(function(result) {
         var dps = [];
         var fill_with_zero = true;
@@ -156,7 +156,7 @@ export default class GnocchiDatasource {
             if (last_timestamp !== undefined){
               // We got a more precise granularity
               if (last_timestamp.valueOf() >= timestamp.valueOf()){
-                return
+                return;
               }
               var c_timestamp = last_timestamp;
               while (c_timestamp.valueOf() < timestamp.valueOf()) {
@@ -282,7 +282,7 @@ export default class GnocchiDatasource {
     validateTarget(target, syntax_only) {
       var self = this;
       var mandatory = [];
-      switch(target.queryMode) {
+      switch (target.queryMode) {
         case "metric":
           if (!target.metric_id) {
             mandatory.push("Metric ID");
@@ -314,7 +314,7 @@ export default class GnocchiDatasource {
         return;
       }
 
-      switch(target.queryMode) {
+      switch (target.queryMode) {
         case "resource_aggregation":
         case "resource_search":
           self.validateSearchTarget(target).then(undefined, function(result) {
@@ -453,7 +453,7 @@ export default class GnocchiDatasource {
                 message += ' ' + reason.data.error.message;
               }
           } else {
-              message = 'No response status code, is CORS correctly configured ?'
+              message = 'No response status code, is CORS correctly configured ?';
           }
         }
         deferred.reject({'message': 'Keystone failure: ' + message});
