@@ -5,6 +5,8 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-execute');
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-typescript');
+  grunt.loadNpmTasks('grunt-tslint');
+  grunt.loadNpmTasks('grunt-karma');
 
   grunt.initConfig({
 
@@ -12,34 +14,23 @@ module.exports = function(grunt) {
 
     typescript: {
       dist: {
-          src: ['src/**/*.ts', "!src/**/*.d.ts"],
+          src: ['src/**/*.ts'],
           dest: 'dist/',
           options: {
-              references: ["angular"],
-              module: 'system',
               target: 'es5',
-              declaration: false,
+              module: 'commonjs',
+              sourceMap: true,
               emitDecoratorMetadata: true,
               experimentalDecorators: true,
-              sourceMap: true,
+              removeComments: false,
               noImplicitAny: false,
           }
       },
-      specs: {
-          src: ['specs/*.ts'],
-          dest: 'specs/',
-          options: {
-              references: ["angular"],
-              module: 'system',
-              target: 'es5',
-              declaration: false,
-              emitDecoratorMetadata: true,
-              experimentalDecorators: true,
-              sourceMap: true,
-              noImplicitAny: false,
-          }
-      }
+    },
 
+    tslint: {
+      source: { files: { src: ['src/**/.ts'] }},
+      options: { configuration: 'tslint.json' }
     },
 
     copy: {
@@ -68,22 +59,19 @@ module.exports = function(grunt) {
       }
     },
 
-    mochaTest: {
+    karma: {
       test: {
-        options: {
-          reporter: 'spec'
-        },
-        src: ['specs/*.js']
+        configFile: 'karma.conf.js'
       }
-    }
+    },
   });
 
   grunt.registerTask('default', [
       'clean',
+      'tslint',
       'copy:sources',
       'copy:plugin',
       'copy:staticContent',
       'typescript:dist',
-      'typescript:specs',
-      'mochaTest']);
+      'karma:test']);
 };

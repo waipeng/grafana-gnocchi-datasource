@@ -1,20 +1,27 @@
-import {describe, beforeEach, it, sinon, expect, angularMocks} from './utils';
-import {Datasource} from "../src/module";
-import angular from 'angular';
-import moment from 'moment';
-import helpers from './helpers';
+///<reference path="../../typings/index.d.ts" />
+
+import {Datasource} from "../module";
+import * as Q from "q";
+import * as moment from "moment";
+import * as angular from "angular"
 
 describe('GnocchiDatasource', function() {
-  var ctx = new helpers.ServiceTestContext();
+  var ctx = {
+      ds: null,
+      $q: null,
+      $httpBackend: null,
+      backendSrv: null,
+      templateSrv: null
+  };
 
-  beforeEach(angularMocks.module('grafana.core'));
-  beforeEach(angularMocks.module('grafana.services'));
-
-  beforeEach(ctx.createService('GnocchiDatasource'));
-
-  beforeEach(function() {
-    ctx.ds = new ctx.service({ url: [''], jsonData: {token: 'XXXXXXXXXXXXX'} });
-  });
+  beforeEach(angular.mock.inject(function($injector) {
+    ctx.$q = Q
+    ctx.$httpBackend = $injector.get('$httpBackend');
+    ctx.backendSrv = {};
+    ctx.templateSrv = {};
+    ctx.ds = new Datasource({ url: [''], jsonData: {token: 'XXXXXXXXXXXXX'} },
+                            ctx.$q, ctx.backendSrv, ctx.templateSrv);
+  }));
 
   function assert_simple_test(targets, method, url, data, label) {
     var query = {
@@ -195,10 +202,10 @@ describe('GnocchiDatasource', function() {
   describe("TestDatasource keystone success", function() {
     var results;
     beforeEach(function() {
-      ctx.ds = new ctx.service({
+      ctx.ds = new Datasource({
         'url': 'http://localhost:5000',
         'jsonData': {'username': 'user', 'project': 'proj', 'password': 'pass'}
-      });
+      }, ctx.$q, ctx.backendSrv, ctx.templateSrv);
 
       ctx.$httpBackend.expect(
         'POST', "http://localhost:5000/v3/auth/tokens",

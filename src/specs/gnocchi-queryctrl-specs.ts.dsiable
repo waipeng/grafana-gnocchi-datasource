@@ -1,26 +1,32 @@
+///<reference path="../types/index-tests.d.ts" />
 
-import {describe, beforeEach, it, sinon, expect, angularMocks} from './utils';
 import {Datasource} from "../src/module";
-import angular from 'angular';
-import moment from 'moment';
-import helpers from './helpers';
 
 describe('GnocchiQueryCtrl', function() {
-  var serv_ctx = new helpers.ServiceTestContext();
-  var ctx = new helpers.ControllerTestContext();
+  var serv_ctx = {}
+  var ctx = {}
 
-  beforeEach(angularMocks.module('grafana.core'));
-  beforeEach(angularMocks.module('grafana.controllers'));
-  beforeEach(angularMocks.module('grafana.services'));
+  beforeEach(angular.module('grafana.core'));
+  beforeEach(angular.module('grafana.controllers'));
+  beforeEach(angular.module('grafana.services'));
   beforeEach(ctx.createControllerPhase('GnocchiQueryCtrl'));
   beforeEach(serv_ctx.createService('GnocchiDatasource'));
 
-  beforeEach(function() {
-    serv_ctx.ds = new serv_ctx.service({ url: [''], jsonData: {token: 'XXXXXXXXXXXXX'} });
+  beforeEach(angular.inject(function($injector) {
+    serv_ctx.ds = new Datasource({ url: [''], jsonData: {token: 'XXXXXXXXXXXXX'} });
+    serv_ctx.$q = q
+    serv_ctx.$httpBackend = $injector.get('$httpBackend');
+    serv_ctx.backendSrv = {};
+    serv_ctx.templateSrv = {};
+
+    ctx.$q = q
+    ctx.$httpBackend = $injector.get('$httpBackend');
+    ctx.backendSrv = {};
+    ctx.templateSrv = {};
     ctx.scope.target = {};
     ctx.scope.get_data = sinon.spy();
-    ctx.scope.datasource = new serv_ctx.service({ url: [''], jsonData: {token: 'XXXXXXXXXXXXX'} });
-  });
+    ctx.scope.datasource = new Datasource({ url: [''], jsonData: {token: 'XXXXXXXXXXXXX'} });
+  }));
 
   var resources = [
     {

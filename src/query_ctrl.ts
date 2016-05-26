@@ -1,7 +1,4 @@
-///<reference path="./common.d.ts" />
-
-import angular from 'angular'
-import _ from 'lodash'
+///<reference path="../typings/index.d.ts" />
 
 export class GnocchiDatasourceQueryCtrl  {
   static templateUrl = 'partials/query.editor.html';
@@ -85,30 +82,10 @@ export class GnocchiDatasourceQueryCtrl  {
     var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
     return _.find(letters, refId => {
-      return _.every(this.panel.targets, function(other) {
+      return _.every(this.panel.targets, function(other: any) {
         return other.refId !== refId;
       });
     });
-  }
-
-  toggleHideQuery() {
-      this.target.hide = !this.target.hide;
-      this.panelCtrl.refresh();
-  }
-  removeQuery() {
-    this.panel.targets = _.without(this.panel.targets, this.target);
-    this.panelCtrl.refresh();
-  };
-
-  duplicateQuery() {
-    var clone = angular.copy(this.target);
-    clone.refId = this.getNextQueryLetter();
-    this.panel.targets.push(clone);
-  }
-
-  moveQuery(direction) {
-    var index = _.indexOf(this.panel.targets, this.target);
-    _.move(this.panel.targets, index, index + direction);
   }
 
   refresh(){
