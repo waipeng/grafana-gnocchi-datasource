@@ -46,7 +46,6 @@ describe('GnocchiDatasource', function() {
         ["2014-10-06T14:36:00", "60.0", "2"]
       ]);
       ctx.ds.query(query).then(function(data) { results = data; });
-      ctx.$q.when([]);
       ctx.$httpBackend.flush();
       ctx.$httpBackend.verifyNoOutstandingRequest();
     });

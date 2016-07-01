@@ -9,7 +9,6 @@ export default class BackendSrvMock {
     datasourceRequest(options) {
       var self = this;
       options.retry = options.retry || 0;
-      var firstAttempt = options.retry === 0;
       console.log("******* REQ DATASOURCE ********");
       console.log(options);
 

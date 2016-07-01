@@ -101,7 +101,7 @@ export default class GnocchiDatasource {
               var measures_req = _.merge({}, default_measures_req);
               measures_req.url = ('v1/resource/' + resource_type +
                                   '/' + resource["id"] + '/metric/' + metric_name + '/measures');
-              return self._retrieve_measures(resource[label] || label, measures_req);
+              return self._retrieve_measures(resource[label] || "attribute " + label + " not found", measures_req);
             }));
           });
         } else if (target.queryMode === "resource_aggregation") {
@@ -118,7 +118,7 @@ export default class GnocchiDatasource {
           };
 
           return self._gnocchi_request(resource_req).then(function(resource) {
-            label = resource[label] || label;
+            label = resource[label] || "attribute " + label + " not found";
             if (!label) { label = resource_id ; }
             default_measures_req.url = ('v1/resource/' + resource_type+ '/' +
                                         resource_id + '/metric/' + metric_name+ '/measures');
@@ -385,13 +385,13 @@ export default class GnocchiDatasource {
               deferred.reject({'message': "Gnocchi authentication failure"});
             }
           } else if (reason.status === 404 && reason.data !== undefined) {
-            reason.message = "Metric not found: " + reason.data.replace(/<[^>]+>/gm, '').replace(/404 Not Found/gm, ""); // Strip html tag
+            reason.message = "Metric not found: " + reason.data.message.replace(/<[^>]+>/gm, ''); // Strip html tag
             deferred.reject(reason);
           } else if (reason.status === 400 && reason.data !== undefined) {
-            reason.message = "Malformed query: " + reason.data.replace(/<[^>]+>/gm, '').replace(/400 Bad Request/gm, ""); // Strip html tag
+            reason.message = "Malformed query: " + reason.data.message.replace(/<[^>]+>/gm, ''); // Strip html tag
             deferred.reject(reason);
           } else if (reason.status >= 300 && reason.data !== undefined) {
-            reason.message = 'Gnocchi error: ' + reason.data.replace(/<[^>]+>/gm, '');  // Strip html tag
+            reason.message = 'Gnocchi error: ' + reason.data.message.replace(/<[^>]+>/gm, '');  // Strip html tag
             deferred.reject(reason);
           } else if (reason.status){
             reason.message = 'Gnocchi error: ' + reason;
