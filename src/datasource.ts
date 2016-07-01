@@ -172,7 +172,7 @@ export default class GnocchiDatasource {
             last_value = value;
           }
         });
-        if (fill_with_zero) {
+        if (fill_with_zero && last_timestamp) {
           dps.push([last_value, last_timestamp.valueOf()]);
         }
         return { target: name, datapoints: dps };

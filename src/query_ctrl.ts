@@ -11,6 +11,7 @@ export class GnocchiDatasourceQueryCtrl  {
 
   constructor(public $scope, private $injector, private $rootScope, private $timeout, private uiSegmentSrv) {
     this.panel = this.panelCtrl.panel;
+    this.$scope = $scope;
 
     // TODO(sileht): Allows custom
     this.aggregators = ['mean', 'sum', 'min', 'max',
@@ -51,19 +52,19 @@ export class GnocchiDatasourceQueryCtrl  {
     this.refresh();
   }
 
-  /*
   suggestMetricIDs(query, callback) {
-    $scope.datasource
-      .performSuggestQuery(query, 'metrics', $scope.target)
+    this.datasource
+      .performSuggestQuery(query, 'metrics', this.target)
       .then(callback);
   }
 
   suggestMetricNames(query, callback) {
-    $scope.datasource
-      .performSuggestQuery(query, 'metric_names', $scope.target)
+    this.datasource
+      .performSuggestQuery(query, 'metric_names', this.target)
       .then(callback);
   }
 
+  /*
   toggleQueryMode() {
     var mode = [
       "resource_search", "resource_aggregation",
