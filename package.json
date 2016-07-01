@@ -36,6 +36,9 @@
     "karma": "^0.13.22",
     "karma-expect": "~1.1.0",
     "karma-mocha": "~0.2.1",
+    "karma-sinon": "~0.0.0",
+    "karma-browserify": "~0.0.0",
+    "browserify": "~0.0.0",
     "mocha": "^2.4.5",
     "expect.js": "~0.2.0",
     "q": "~1.4.1"
