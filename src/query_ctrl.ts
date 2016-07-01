@@ -16,27 +16,8 @@ export class GnocchiDatasourceQueryCtrl  {
   queryModes: any;
 
   constructor(public $scope, private $injector) {
-    var testmode = false;
     this.$scope = $scope;
-    if (this.panelCtrl) {
-        this.panel = this.panelCtrl.panel;
-    } else {
-        testmode = true;
-        // Mock for testing
-        this.panelCtrl = {
-            refresh: function(){}
-        };
-        this.panel = {
-            targets: [],
-            refresh: function(){},
-        };
-        this.target = {
-            refId: null,
-            queryMode: null,
-            validQuery: false,
-            aggregator: null,
-        };
-    };
+    this.panel = this.panelCtrl.panel;
 
     // TODO(sileht): Allows custom
     this.aggregators = ['mean', 'sum', 'min', 'max',
@@ -64,9 +45,7 @@ export class GnocchiDatasourceQueryCtrl  {
     this.target.validQuery = false;
     this.target.queryError = 'No query';
 
-    if (!testmode) {
-        this.queryUpdated();
-    }
+    this.queryUpdated();
   }
 
   refresh(){
