@@ -12,8 +12,7 @@ Installation from sources
 =========================
 
     npm install
-    npm install -g grunt-cli
-    grunt
+    ./run-tests.sh
 
     ln -s dist /var/lib/grafana/plugins/grafana-gnocchi-datasource
     # or

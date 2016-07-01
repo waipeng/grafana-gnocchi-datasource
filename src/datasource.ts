@@ -320,12 +320,12 @@ export default class GnocchiDatasource {
         case "resource_search":
           self.validateSearchTarget(target).then(undefined, function(result) {
             if (result){
-                return result.message;
+              return result.message;
             } else {
-                return "Unexpected error";
+              return "Unexpected error";
             }
           });
-          break;
+          return;
       }
       return;
     }
