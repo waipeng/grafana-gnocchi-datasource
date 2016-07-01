@@ -23,11 +23,11 @@
     <div class="gf-form-inline">
         <div class="gf-form max-width-30" ng-if="['resource'].indexOf(ctrl.target.queryMode) >= 0">
             <label class="gf-form-label query-keyword width-8">Resource ID</label>
-            <input type="text" class="gf-form-input" ng-model="ctrl.target.resource_id" bs-typeahead="suggestResourceIDs" spellcheck='false' placeholder="resource id" data-min-length=0 ng-model-onblur ng-blur="ctrl.queryUpdated()">
+            <input type="text" class="gf-form-input" ng-model="ctrl.target.resource_id" get-options="ctrl.suggestResourceIDs()" spellcheck='false' placeholder="resource id" data-min-length=0 ng-model-onblur ng-blur="ctrl.queryUpdated()">
         </div>
         <div class="gf-form max-width-30" ng-if="['metric'].indexOf(ctrl.target.queryMode) >= 0">
             <label class="gf-form-label query-keyword width-8">Metric ID</label>
-            <input type="text" class="gf-form-input" ng-model="ctrl.target.metric_id" bs-typeahead="suggestMetricIDs" spellcheck='false' placeholder="metric id" data-min-length=0 ng-model-onblur ng-blur="ctrl.queryUpdated()">
+            <input type="text" class="gf-form-input" ng-model="ctrl.target.metric_id" get-options="ctrl.suggestMetricIDs()" spellcheck='false' placeholder="metric id" data-min-length=0 ng-model-onblur ng-blur="ctrl.queryUpdated()">
         </div>
         <div class="gf-form max-width-20" ng-if="['resource', 'resource_search', 'resource_aggregation'].indexOf(ctrl.target.queryMode) >= 0">
             <label class="gf-form-label query-keyword width-8">Resource type</label>
@@ -35,7 +35,7 @@
         </div>
         <div class="gf-form max-width-20" ng-if="['resource', 'resource_search', 'resource_aggregation'].indexOf(ctrl.target.queryMode) >= 0">
             <label class="gf-form-label query-keyword width-8">Metric name</label>
-            <input type="text" class="gf-form-input" ng-model="ctrl.target.metric_name" bs-typeahead="suggestMetricNames" spellcheck='false' placeholder="metric name" data-min-length=0 ng-model-onblur ng-blur="ctrl.queryUpdated()">
+            <input type="text" class="gf-form-input" ng-model="ctrl.target.metric_name" get-options="ctrl.suggestMetricNames()" spellcheck='false' placeholder="metric name" data-min-length=0 ng-model-onblur ng-blur="ctrl.queryUpdated()">
         </div>
         <div class="gf-form">
             <label class="gf-form-label query-keyword width-8">Aggregator</label>

@@ -4,17 +4,18 @@ import {Datasource} from "../module";
 import {QueryCtrl} from "../module";
 import BackendSrvMock from "./mocks/backendsrv";
 import TemplateSrvMock from "./mocks/templatesrv";
-import * as moment from "moment";
 import * as angular from "angular";
 
 describe('GnocchiQueryCtrl', function() {
+  var queryCtrl = null;
   var ds = null;
   var $q = null;
+  var $timeout = null;
   var $httpBackend = null;
   var backendSrv = null;
   var templateSrv = null;
+  var uiSegmentSrv = null;
   var results = null;
-  var $rootScope = null;
 
   /*
   beforeEach(angular.module('grafana.core'));
@@ -32,12 +33,9 @@ describe('GnocchiQueryCtrl', function() {
     ds = new Datasource({url: [''], jsonData: {token: 'XXXXXXXXXXXXX'} },
                          $q, backendSrv, templateSrv);
 
-    $rootScope.target = {};
-//    $rootScope.get_data = sinon.spy();
-    $rootScope.datasource = ds;
-    /*queryCtrl = new DatasourceQueryCtrl($scope, $
-      constructor(public $scope, private $injector, private $rootScope, private $timeout, private uiSegmentSrv) {
-      */
+    queryCtrl = new QueryCtrl(null, $injector);
+    queryCtrl.target = {};
+    queryCtrl.datasource = ds;
   }));
 
   afterEach(function() {
@@ -96,26 +94,11 @@ describe('GnocchiQueryCtrl', function() {
     }
   ];
 
-  describe('basic', function() {
-    it('target toggle', function() {
-      $rootScope.init();
-      expect($rootScope.target.queryMode).to.be('resource_search');
-      $rootScope.toggleQueryMode();
-      expect($rootScope.target.queryMode).to.be('resource_aggregation');
-      $rootScope.toggleQueryMode();
-      expect($rootScope.target.queryMode).to.be('resource');
-      $rootScope.toggleQueryMode();
-      expect($rootScope.target.queryMode).to.be('metric');
-      $rootScope.toggleQueryMode();
-      expect($rootScope.target.queryMode).to.be('resource_search');
-    });
-  });
-
   describe('suggestMetricIDs', function() {
     var results;
     beforeEach(function() {
       $httpBackend.expect('GET', "/v1/metric").respond(metrics);
-      $rootScope.suggestMetricIDs("foobar", function(data) { results = data ; });
+      queryCtrl.suggestMetricIDs("foobar", function(data) { results = data ; });
       $httpBackend.flush();
     });
 
@@ -130,7 +113,7 @@ describe('GnocchiQueryCtrl', function() {
     var results;
     beforeEach(function() {
       $httpBackend.expect('GET', "/v1/resource/generic").respond(resources);
-      $rootScope.suggestResourceIDs("foobar", function(data) { results = data ; });
+      queryCtrl.suggestResourceIDs("foobar", function(data) { results = data ; });
       $httpBackend.flush();
     });
 
@@ -144,9 +127,9 @@ describe('GnocchiQueryCtrl', function() {
   describe('suggestMetricNames', function() {
     var results;
     beforeEach(function() {
-      $rootScope.target = {'resource_id': 'cba8d3d5-d5e1-4692-bcfe-d77feaf01d7e', 'queryMode': 'resource'};
+      queryCtrl.target = {'resource_id': 'cba8d3d5-d5e1-4692-bcfe-d77feaf01d7e', 'queryMode': 'resource'};
       $httpBackend.expect('GET', "/v1/resource/generic/cba8d3d5-d5e1-4692-bcfe-d77feaf01d7e").respond(resources[0]);
-      $rootScope.suggestMetricNames("foobar", function(data) { results = data ; });
+      queryCtrl.suggestMetricNames("foobar", function(data) { results = data ; });
       $httpBackend.flush();
     });
 
@@ -159,45 +142,35 @@ describe('GnocchiQueryCtrl', function() {
 
   describe('validate query success', function() {
     beforeEach(function() {
-      $rootScope.target = {'resource_query': '{"=": {"id": "foobar"}}',
+      queryCtrl.target = {'resource_query': '{"=": {"id": "foobar"}}',
                           'queryMode': 'resource_search', 'metric_name': 'cpu_util'};
       $httpBackend.expect('POST', "/v1/search/resource/generic").respond([]);
       $httpBackend.expect('POST', "/v1/search/resource/generic").respond([]);
-      $rootScope.init();
-      $rootScope.targetBlur();
+      queryCtrl.queryUpdated();
       $httpBackend.flush();
     });
     it('no target error', function() {
-      expect($rootScope.target.error).to.be(undefined);
+      expect(queryCtrl.target.error).to.be(undefined);
     });
   });
 
   describe('validate query missing field', function() {
     it('resource', function() {
-      $rootScope.target = {'resource_id': '', 'queryMode': 'resource', 'metric_name': ''};
-      $rootScope.init();
-      expect($rootScope.target.error).to.be("Missing or invalid fields: Resource ID, Metric name");
-      $rootScope.target.error = null;
-      $rootScope.targetBlur();
-      expect($rootScope.target.error).to.be("Missing or invalid fields: Resource ID, Metric name");
+      queryCtrl.target = {'resource_id': '', 'queryMode': 'resource', 'metric_name': ''};
+      queryCtrl.queryUpdated();
+      expect(queryCtrl.target.error).to.be("Missing or invalid fields: Resource ID, Metric name");
     });
 
     it('metric', function() {
-      $rootScope.target = {'metric_id': '', 'queryMode': 'metric'};
-      $rootScope.init();
-      expect($rootScope.target.error).to.be("Missing or invalid fields: Metric ID");
-      $rootScope.target.error = null;
-      $rootScope.targetBlur();
-      expect($rootScope.target.error).to.be("Missing or invalid fields: Metric ID");
+      queryCtrl.target = {'metric_id': '', 'queryMode': 'metric'};
+      queryCtrl.queryUpdated();
+      expect(queryCtrl.target.error).to.be("Missing or invalid fields: Metric ID");
     });
 
     it('resource_search', function() {
-      $rootScope.target = {'resource_search': '', 'queryMode': 'resource_search', 'metric_name': ''};
-      $rootScope.init();
-      expect($rootScope.target.error).to.be("Missing or invalid fields: Query, Metric name");
-      $rootScope.target.error = null;
-      $rootScope.targetBlur();
-      expect($rootScope.target.error).to.be("Missing or invalid fields: Query, Metric name");
+      queryCtrl.target = {'resource_search': '', 'queryMode': 'resource_search', 'metric_name': ''};
+      queryCtrl.queryUpdated();
+      expect(queryCtrl.target.error).to.be("Missing or invalid fields: Query, Metric name");
     });
   });
 

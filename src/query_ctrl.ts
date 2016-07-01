@@ -2,16 +2,41 @@
 
 export class GnocchiDatasourceQueryCtrl  {
   static templateUrl = 'partials/query.editor.html';
-  aggregators: any;
-  queryModes: any;
+
+  // This is a copy of QueryCtrl interface
   target: any;
+  datasource: any;
   panelCtrl: any;
   panel: any;
-  datasource: any;
+  hasRawMode: boolean;
+  error: string;
 
-  constructor(public $scope, private $injector, private $rootScope, private $timeout, private uiSegmentSrv) {
-    this.panel = this.panelCtrl.panel;
+  // local stuffs
+  aggregators: any;
+  queryModes: any;
+
+  constructor(public $scope, private $injector) {
+    var testmode = false;
     this.$scope = $scope;
+    if (this.panelCtrl) {
+        this.panel = this.panelCtrl.panel;
+    } else {
+        testmode = true;
+        // Mock for testing
+        this.panelCtrl = {
+            refresh: function(){}
+        };
+        this.panel = {
+            targets: [],
+            refresh: function(){},
+        };
+        this.target = {
+            refId: null,
+            queryMode: null,
+            validQuery: false,
+            aggregator: null,
+        };
+    };
 
     // TODO(sileht): Allows custom
     this.aggregators = ['mean', 'sum', 'min', 'max',
@@ -38,8 +63,16 @@ export class GnocchiDatasourceQueryCtrl  {
 
     this.target.validQuery = false;
     this.target.queryError = 'No query';
-    this.queryUpdated();
+
+    if (!testmode) {
+        this.queryUpdated();
+    }
   }
+
+  refresh(){
+    this.panelCtrl.refresh();
+  }
+
   suggestResourceIDs(query, callback) {
     this.datasource
       .performSuggestQuery(query, 'resources', this.target)
@@ -64,20 +97,6 @@ export class GnocchiDatasourceQueryCtrl  {
       .then(callback);
   }
 
-  /*
-  toggleQueryMode() {
-    var mode = [
-      "resource_search", "resource_aggregation",
-      "resource", "metric",
-    ];
-    var index = mode.indexOf($scope.target.queryMode) + 1;
-    if (index === mode.length) {
-      index = 0;
-    }
-    $scope.target.queryMode = mode[index];
-  }
-  */
-
   // QueryCTRL stuffs
   getNextQueryLetter() {
     var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -89,7 +108,4 @@ export class GnocchiDatasourceQueryCtrl  {
     });
   }
 
-  refresh(){
-    this.panelCtrl.refresh();
-  }
 }

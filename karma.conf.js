@@ -20,10 +20,12 @@ module.exports = function(config) {
       'node_modules/angular-mocks/angular-mocks.js',
       'node_modules/lodash/lodash.js',
       'dist/specs/gnocchi-datasource-specs.js',
+      'dist/specs/gnocchi-queryctrl-specs.js',
     ],
 
     preprocessors: {
       'dist/specs/gnocchi-datasource-specs.js': ['browserify'],
+      'dist/specs/gnocchi-queryctrl-specs.js': ['browserify'],
     },
 
     // list of files to exclude
