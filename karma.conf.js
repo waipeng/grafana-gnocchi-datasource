@@ -2,13 +2,12 @@ module.exports = function(config) {
   'use strict';
 
   config.set({
-    frameworks: ['browserify', 'mocha', 'expect', 'sinon'],
+    frameworks: ['browserify', 'mocha', 'expect'],
 
     plugins : [
       'karma-browserify',
       'karma-mocha',
       'karma-expect',
-      'karma-sinon',
       'karma-phantomjs-launcher'
     ],
 
