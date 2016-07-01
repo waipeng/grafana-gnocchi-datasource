@@ -3,6 +3,9 @@ Grafana Gnocchi datasource
 
 Gnocchi datasource for Grafana 3.x
 
+.. image:: https://travis-ci.org/sileht/python-jsonpath-rw-ext.png?branch=master
+   :target: https://travis-ci.org/sileht/python-jsonpath-rw-ext
+
 Installation via grafana.net
 ============================
 
