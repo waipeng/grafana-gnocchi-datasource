@@ -3,30 +3,32 @@
 import {Datasource} from "../module";
 import BackendSrvMock from "./mocks/backendsrv";
 import TemplateSrvMock from "./mocks/templatesrv";
-import * as Q from "q";
 import * as moment from "moment";
 import * as angular from "angular";
 
 describe('GnocchiDatasource', function() {
-  var ctx = {
-      ds: null,
-      $q: null,
-      $httpBackend: null,
-      backendSrv: null,
-      templateSrv: null
-  };
+  var ds = null;
+  var $q = null;
+  var $httpBackend = null;
+  var backendSrv = null;
+  var templateSrv = null;
+  var results = null;
 
   beforeEach(angular.mock.inject(function($injector) {
-    ctx.$q = Q;
-    ctx.$httpBackend = $injector.get('$httpBackend');
-    ctx.$httpBackend.resetExpectations();
-    ctx.backendSrv = new BackendSrvMock($injector.get('$http'));
-    ctx.templateSrv = new TemplateSrvMock();
-    ctx.ds = new Datasource({url: [''], jsonData: {token: 'XXXXXXXXXXXXX'} },
-                            ctx.$q, ctx.backendSrv, ctx.templateSrv);
+    $q = $injector.get("$q");
+    $httpBackend = $injector.get('$httpBackend');
+    backendSrv = new BackendSrvMock($injector.get('$http'));
+    templateSrv = new TemplateSrvMock();
+    ds = new Datasource({url: [''], jsonData: {token: 'XXXXXXXXXXXXX'} },
+                         $q, backendSrv, templateSrv);
   }));
 
-  function assert_simple_test(targets, method, url, data, label) {
+  afterEach(function() {
+    $httpBackend.verifyNoOutstandingExpectation();
+    $httpBackend.verifyNoOutstandingRequest();
+  });
+
+  function assert_simple_test(targets, method, url, data, label, pre_assert, post_assert) {
     var query = {
       range: { from: moment.utc([2014, 3, 10, 3, 20, 10]), to: moment.utc([2014, 3, 20, 3, 20, 10]) },
       targets: targets,
@@ -36,21 +38,27 @@ describe('GnocchiDatasource', function() {
     //if (data) {
       headers["Content-Type"] = "application/json";
     //}
-    var results;
-    beforeEach(function() {
-      ctx.$httpBackend.expect(method, url, data, headers).respond([
+
+    it('should return series list', angular.mock.inject(function() {
+      if (pre_assert) {
+          pre_assert();
+      }
+      $httpBackend.expect(method, url, data, headers).respond([
         ["2014-10-06T14:00:00", "600.0", "7"],
         ["2014-10-06T14:20:00", "600.0", "5"],
         ["2014-10-06T14:33:00", "60.0", "43.1"],
         ["2014-10-06T14:34:00", "60.0", "12"],
         ["2014-10-06T14:36:00", "60.0", "2"]
       ]);
-      ctx.ds.query(query).then(function(data) { results = data; });
-      ctx.$httpBackend.flush();
-      ctx.$httpBackend.verifyNoOutstandingRequest();
-    });
+      if (post_assert) {
+          post_assert();
+      }
+      ds.query(query).then(function(data) {
+          results = data;
+      });
 
-    it('should return series list', function() {
+      $httpBackend.flush();
+
       expect(results.data.length).to.be(1);
       expect(results.data[0].target).to.be(label);
       expect(results.data[0].datapoints).to.eql([
@@ -65,36 +73,31 @@ describe('GnocchiDatasource', function() {
         [ 0, 1412606100000 ],
         [ '2', 1412606160000 ]]
       );
-    });
-
+    }));
   }
 
   describe('Resource', function() {
-    beforeEach(function() {
-      ctx.$httpBackend.expect("GET", "/v1/resource/instance/my_uuid").respond({
-        "display_name": "myfirstvm",
-        "id": "6868da77-fa82-4e67-aba9-270c5ae8cbca",
-      });
-    });
-
     assert_simple_test(
       [{ queryMode: 'resource', resource_type:   'instance', resource_id: 'my_uuid', metric_name: 'cpu_util', aggregator: 'max' }],
       'GET',
       "/v1/resource/instance/my_uuid/metric/cpu_util/measures?" +
         "aggregation=max&end=2014-04-20T03:20:10.000Z&start=2014-04-10T03:20:10.000Z",
       null,
-      'my_uuid'
-      );
+      '6868da77-fa82-4e67-aba9-270c5ae8cbca', function() {
+          $httpBackend.expect("GET", "/v1/resource/instance/my_uuid").respond({
+              "display_name": "myfirstvm",
+              "id": "6868da77-fa82-4e67-aba9-270c5ae8cbca",
+          });
+      }, null);
   });
-/*
+
   describe('Metric', function() {
     assert_simple_test(
       [{ queryMode: 'metric', metric_id: 'my_uuid', aggregator: 'max' }],
       'GET',
       '/v1/metric/my_uuid/measures?aggregation=max&end=2014-04-20T03:20:10.000Z&start=2014-04-10T03:20:10.000Z',
       null,
-      'my_uuid'
-      );
+      'my_uuid', null, null);
   });
 
   describe('Resource aggregation', function() {
@@ -105,7 +108,7 @@ describe('GnocchiDatasource', function() {
       "/v1/aggregation/resource/instance/metric/cpu_util?" +
         "aggregation=max&end=2014-04-20T03:20:10.000Z&start=2014-04-10T03:20:10.000Z",
       {"=": {"server_group": "autoscalig_group"}},
-      'my_aggregation');
+      'my_aggregation', null, null);
   });
 
   describe('Resource search', function() {
@@ -154,16 +157,16 @@ describe('GnocchiDatasource', function() {
 
     var results;
     beforeEach(function() {
-      ctx.$httpBackend.expect('POST', url_expected_search_resources).respond(response_search_resources);
-      ctx.$httpBackend.expect('GET', url_expected_get_measures1).respond(response_get_measures1);
-      ctx.$httpBackend.expect('GET', url_expected_get_measures2).respond(response_get_measures2);
-      ctx.ds.query(query).then(function(data) { results = data; });
-      ctx.$httpBackend.flush();
+      $httpBackend.expect('POST', url_expected_search_resources).respond(response_search_resources);
+      $httpBackend.expect('GET', url_expected_get_measures1).respond(response_get_measures1);
+      $httpBackend.expect('GET', url_expected_get_measures2).respond(response_get_measures2);
+      ds.query(query).then(function(data) { results = data; });
+      $httpBackend.flush();
     });
 
     it("nothing more", function() {
-      ctx.$httpBackend.verifyNoOutstandingExpectation();
-      ctx.$httpBackend.verifyNoOutstandingRequest();
+      $httpBackend.verifyNoOutstandingExpectation();
+      $httpBackend.verifyNoOutstandingRequest();
     });
 
     it('should return series list', function() {
@@ -182,14 +185,14 @@ describe('GnocchiDatasource', function() {
   describe("TestDatasource success", function() {
     var results;
     beforeEach(function() {
-      ctx.$httpBackend.expect('GET', "").respond(200);
-      ctx.ds.testDatasource().then(function(data) { results = data; });
-      ctx.$httpBackend.flush();
+      $httpBackend.expect('GET', "").respond(200);
+      ds.testDatasource().then(function(data) { results = data; });
+      $httpBackend.flush();
     });
 
     it("nothing more", function() {
-      ctx.$httpBackend.verifyNoOutstandingExpectation();
-      ctx.$httpBackend.verifyNoOutstandingRequest();
+      $httpBackend.verifyNoOutstandingExpectation();
+      $httpBackend.verifyNoOutstandingRequest();
     });
 
     it('should success', function() {
@@ -201,30 +204,30 @@ describe('GnocchiDatasource', function() {
   describe("TestDatasource keystone success", function() {
     var results;
     beforeEach(function() {
-      ctx.ds = new Datasource({
+      ds = new Datasource({
         'url': 'http://localhost:5000',
         'jsonData': {'username': 'user', 'project': 'proj', 'password': 'pass'}
-      }, ctx.$q, ctx.backendSrv, ctx.templateSrv);
+      }, $q, backendSrv, templateSrv);
 
-      ctx.$httpBackend.expect(
+      $httpBackend.expect(
         'POST', "http://localhost:5000/v3/auth/tokens",
         {"auth": { "identity": { "methods": ["password"],
           "password": { "user": { "name": "user", "password": "pass", "domain": { "id": "default"}}}},
           "scope": { "project": { "domain": { "id": "default" }, "name": "proj"}}}},
-          {'Content-Type': 'application/json', "Accept": "application/json, text/plain, * /*"}
+          {'Content-Type': 'application/json', "Accept": "application/json, text/plain, */*"}
       ).respond({'token': {'catalog': [{'type': 'metric', 'endpoints':
         [{'url': 'http://localhost:8041/', 'interface': 'public'}]}]}}, {'X-Subject-Token': 'foobar'});
-      ctx.$httpBackend.expect('GET', "http://localhost:8041/v1/resource", null,
-                             {"Accept": "application/json, text/plain, * /*",
+      $httpBackend.expect('GET', "http://localhost:8041/v1/resource", null,
+                             {"Accept": "application/json, text/plain, */*",
                               "X-Auth-Token": "foobar"}).respond(200);
 
-      ctx.ds.testDatasource().then(function(data) { results = data; });
-      ctx.$httpBackend.flush();
+      ds.testDatasource().then(function(data) { results = data; });
+      $httpBackend.flush();
     });
 
     it("nothing more", function() {
-      ctx.$httpBackend.verifyNoOutstandingExpectation();
-      ctx.$httpBackend.verifyNoOutstandingRequest();
+      $httpBackend.verifyNoOutstandingExpectation();
+      $httpBackend.verifyNoOutstandingRequest();
     });
 
     it('should success', function() {
@@ -256,14 +259,14 @@ describe('GnocchiDatasource', function() {
 
     var results;
     beforeEach(function() {
-      ctx.$httpBackend.expect('POST', url_expected_search_resources).respond(response_search_resources);
-      ctx.ds.metricFindQuery('resources(instance, id, {"=": {"id": "foobar"}})').then(function(data) { results = data; });
-      ctx.$httpBackend.flush();
+      $httpBackend.expect('POST', url_expected_search_resources).respond(response_search_resources);
+      ds.metricFindQuery('resources(instance, id, {"=": {"id": "foobar"}})').then(function(data) { results = data; });
+      $httpBackend.flush();
     });
 
     it("nothing more", function() {
-      ctx.$httpBackend.verifyNoOutstandingExpectation();
-      ctx.$httpBackend.verifyNoOutstandingRequest();
+      $httpBackend.verifyNoOutstandingExpectation();
+      $httpBackend.verifyNoOutstandingRequest();
     });
 
     it('should success', function() {
@@ -294,14 +297,14 @@ describe('GnocchiDatasource', function() {
 
     var results;
     beforeEach(function() {
-      ctx.$httpBackend.expect('GET', url_expected).respond(response_resource);
-      ctx.ds.metricFindQuery('metrics(6868da77-fa82-4e67-aba9-270c5ae8cbca)').then(function(data) { results = data; });
-      ctx.$httpBackend.flush();
+      $httpBackend.expect('GET', url_expected).respond(response_resource);
+      ds.metricFindQuery('metrics(6868da77-fa82-4e67-aba9-270c5ae8cbca)').then(function(data) { results = data; });
+      $httpBackend.flush();
     });
 
     it("nothing more", function() {
-      ctx.$httpBackend.verifyNoOutstandingExpectation();
-      ctx.$httpBackend.verifyNoOutstandingRequest();
+      $httpBackend.verifyNoOutstandingExpectation();
+      $httpBackend.verifyNoOutstandingRequest();
     });
 
     it('should success', function() {
@@ -314,18 +317,17 @@ describe('GnocchiDatasource', function() {
   describe("metricFindQuery unknown", function() {
     var results;
     beforeEach(function() {
-      ctx.ds.metricFindQuery('not_existing(instance, id, {"=": {"id": "foobar"}})').then(function(data) { results = data; });
+      ds.metricFindQuery('not_existing(instance, id, {"=": {"id": "foobar"}})').then(function(data) { results = data; });
     });
 
     it("nothing more", function() {
-      ctx.$httpBackend.verifyNoOutstandingExpectation();
-      ctx.$httpBackend.verifyNoOutstandingRequest();
+      $httpBackend.verifyNoOutstandingExpectation();
+      $httpBackend.verifyNoOutstandingRequest();
     });
 
     it('should success', function() {
       expect(results.length).to.be(0);
     });
   });
-*/
 });
 ;

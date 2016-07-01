@@ -9,12 +9,7 @@ export default class BackendSrvMock {
     datasourceRequest(options) {
       var self = this;
       options.retry = options.retry || 0;
-      console.log("******* REQ DATASOURCE ********");
-      console.log(options);
-
       return self.$http(options).then(function(data){
-          console.log("**** RESULT ********");
-          console.log(data);
           return data;
       }, function(err) {
         //populate error obj on Internal Error

@@ -101,6 +101,7 @@ export default class GnocchiDatasource {
               var measures_req = _.merge({}, default_measures_req);
               measures_req.url = ('v1/resource/' + resource_type +
                                   '/' + resource["id"] + '/metric/' + metric_name + '/measures');
+              if (!label) { label = "id" ; }
               return self._retrieve_measures(resource[label] || "attribute " + label + " not found", measures_req);
             }));
           });
@@ -118,6 +119,7 @@ export default class GnocchiDatasource {
           };
 
           return self._gnocchi_request(resource_req).then(function(resource) {
+            if (!label) { label = "id" ; }
             label = resource[label] || "attribute " + label + " not found";
             if (!label) { label = resource_id ; }
             default_measures_req.url = ('v1/resource/' + resource_type+ '/' +
