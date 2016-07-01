@@ -1,4 +1,5 @@
-Grafana Gnocchi datasource 
+==========================
+Grafana Gnocchi datasource
 ==========================
 
 Gnocchi datasource for Grafana 3.x
@@ -6,13 +7,18 @@ Gnocchi datasource for Grafana 3.x
 .. image:: https://travis-ci.org/sileht/python-jsonpath-rw-ext.png?branch=master
    :target: https://travis-ci.org/sileht/python-jsonpath-rw-ext
 
-Installation via grafana.net
-============================
+Installation via grafana.net (Coming soon)
+------------------------------------------
+
+::
 
     sudo grafana-cli plugins install grafana-gnocchi-datasource
 
+
 Installation from sources
-=========================
+-------------------------
+
+::
 
     npm install
     ./run-tests.sh
@@ -23,7 +29,7 @@ Installation from sources
 
 
 Implemented
-===========
+-----------
 
 * Getting measures of a metric with the metric_id
 * Getting measures of multiple resources with a search query and a metric name
@@ -32,7 +38,7 @@ Implemented
 * Listing resources id for template query.
 
 Not yet implemented
-===================
+-------------------
 
 
 Current Limitation
@@ -47,6 +53,6 @@ In direct mode, we can use login/password and the Keystone URL.
 Note that CORS MUST be enabled on Keystone and Gnocchi servers.
 
 License
-=======
+-------
 
 APACHE LICENSE Version 2.0, January 2004
