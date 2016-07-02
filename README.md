@@ -4,21 +4,17 @@ Gnocchi datasource for Grafana 3.x
 
 ## Installation via grafana.net (Coming soon)
 
-::
-
-    sudo grafana-cli plugins install grafana-gnocchi-datasource
+    $ sudo grafana-cli plugins install grafana-gnocchi-datasource
 
 
 ## Installation from sources
 
-::
+    $ npm install
+    $ ./run-tests.sh  # This also build the plugin under dist/
 
-    npm install
-    ./run-tests.sh
-
-    ln -s dist /var/lib/grafana/plugins/grafana-gnocchi-datasource
-    # or
-    cp -a dist /var/lib/grafana/plugins/grafana-gnocchi-datasource
+    $ ln -s dist /var/lib/grafana/plugins/grafana-gnocchi-datasource
+    $ # or
+    $ cp -a dist /var/lib/grafana/plugins/grafana-gnocchi-datasource
 
 
 ## Configuration Panel
