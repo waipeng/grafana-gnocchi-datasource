@@ -1,20 +1,15 @@
-Grafana Gnocchi datasource
-==========================
+# Grafana Gnocchi datasource [![Travis CI](https://travis-ci.org/sileht/grafana-gnocchi-datasource.png?branch=master)](https://travis-ci.org/sileht/grafana-gnocchi-datasource)
 
 Gnocchi datasource for Grafana 3.x
 
-[![Travis CI](https://travis-ci.org/sileht/grafana-gnocchi-datasource.png?branch=master)](https://travis-ci.org/sileht/grafana-gnocchi-datasource)
-
-Installation via grafana.net (Coming soon)
-==========================================
+## Installation via grafana.net (Coming soon)
 
 ::
 
     sudo grafana-cli plugins install grafana-gnocchi-datasource
 
 
-Installation from sources
-=========================
+## Installation from sources
 
 ::
 
@@ -26,8 +21,7 @@ Installation from sources
     cp -a dist /var/lib/grafana/plugins/grafana-gnocchi-datasource
 
 
-Configuration Panel
-===================
+## Configuration Panel
 
 ![](docs/add_datasource_gnocchi.png)
 
@@ -45,8 +39,7 @@ Password | The Keystone password
 Note: If the Keystone server is set as URL, the Gnocchi server will be autodiscovered.
 This works only if Access = Direct, and CORS is properly configured on Keystone and Gnocchi side.
 
-Query editor
-============
+## Query editor
 
 Open a graph in edit mode by click the title.
 
@@ -94,8 +87,8 @@ For details of `Query` format, please refer to the Gnocchi documentations.
 
 - [Search for resource - Gnocchi Documentation](http://docs.openstack.org/developer/gnocchi/rest.html#searching-for-resources).
 
-Templated queries
-=================
+## Templated queries
+
 Gnocchi Datasource Plugin provides following functions in `Variables values query` field in Templating Editor.
 
 Name | Description
@@ -107,8 +100,7 @@ For details of `query` format, please refer to the Gnocchi documentations.
 
 - [Searching for resources - Gnocchi documentation](http://docs.openstack.org/developer/gnocchi/rest.html#searching-for-resources).
 
-Current Limitation
-==================
+## Current Limitation
 
 Grafana doesn’t allow to query two different servers when using the proxy mode,
 so we are not able to query Keystone for a token and then query gnocchi.
@@ -118,7 +110,6 @@ In proxymode, we need to set a token and the Gnocchi URL on the datasource.
 In direct mode, we can use login/password and the Keystone URL.
 Note that CORS MUST be enabled on Keystone and Gnocchi servers.
 
-License
-=======
+## License
 
 APACHE LICENSE Version 2.0, January 2004
