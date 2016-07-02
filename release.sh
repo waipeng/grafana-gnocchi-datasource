@@ -5,11 +5,13 @@ cd $(readlink -f $(dirname $0))
 
 version=$1
 
-git tag $version
-git push --tags
-
 ./run-tests.sh
+
+git tag $version
+
 cp -a dist grafana-gnocchi-datasource
 tar -czf grafana-gnocchi-datasource-${version}.tar.gz grafana-gnocchi-datasource
+
+git push --tags
 
 rm -rf grafana-gnocchi-datasource
