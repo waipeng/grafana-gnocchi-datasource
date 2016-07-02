@@ -1,24 +1,35 @@
----
-page_title: Gnocchi Guide
-page_description: Gnocchi guide for Grafana
-page_keywords: grafana, gnocchi, documentation
----
+Grafana Gnocchi datasource
+==========================
 
-# Gnocchi Guide
-Grafana brings initial support for Gnocchi Datasources. While the process of adding the datasource is similar to adding a Graphite or OpenTSDB datasource type, Kairos DB does have a few different options for building queries.
+Gnocchi datasource for Grafana 3.x
 
-## Adding the data source to Grafana
-![](/img/v2/add_datasource_gnocchi.png)
+[![Travis CI](https://travis-ci.org/sileht/grafana-gnocchi-datasource.png?branch=master)](https://travis-ci.org/sileht/grafana-gnocchi-datasource)
 
-1. Open the side menu by clicking the the Grafana icon in the top header.
-2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
+Installation via grafana.net (Coming soon)
+==========================================
 
-    > NOTE: If this link is missing in the side menu it means that your current user does not have the `Admin` role for the current organization.
+::
 
-3. Click the `Add new` link in the top header.
-4. Select `Gnocchi` from the dropdown.
+    sudo grafana-cli plugins install grafana-gnocchi-datasource
 
 
+Installation from sources
+=========================
+
+::
+
+    npm install
+    ./run-tests.sh
+
+    ln -s dist /var/lib/grafana/plugins/grafana-gnocchi-datasource
+    # or
+    cp -a dist /var/lib/grafana/plugins/grafana-gnocchi-datasource
+
+
+Configuration Panel
+===================
+
+![](docs/add_datasource_gnocchi.png)
 
 Name | Description
 ------------ | -------------
@@ -34,7 +45,9 @@ Password | The Keystone password
 Note: If the Keystone server is set as URL, the Gnocchi server will be autodiscovered.
 This works only if Access = Direct, and CORS is properly configured on Keystone and Gnocchi side.
 
-## Query editor
+Query editor
+============
+
 Open a graph in edit mode by click the title.
 
 The editor have 4 modes to retreives metrics, you can change the mode by clicking of the pencil on the right.
@@ -42,14 +55,14 @@ The editor have 4 modes to retreives metrics, you can change the mode by clickin
 * Measurements of a metric:
   Create one graph with datapoint of the defined metric
 
-  ![](/img/v2/gnocchi_query_mode1.png)
+  ![](docs/gnocchi_query_mode1.png)
 
   Metric ID: the id of the metric you are interrested in
 
 * Measurements of a metric of a resource:
   Create one graph with datapoint of the metric of the defined resource.
 
-  ![](/img/v2/gnocchi_query_mode2.png)
+  ![](docs/gnocchi_query_mode2.png)
 
   Resource ID: the id of the resource
   Resource type: the type of the resource (generic, instance, disk, ...)
@@ -58,7 +71,7 @@ The editor have 4 modes to retreives metrics, you can change the mode by clickin
 * Measurements of a metric of multiple resources:
   Create one graph per metric find with the query.
 
-  ![](/img/v2/gnocchi_query_mode3.png)
+  ![](docs/gnocchi_query_mode3.png)
 
   Query: the query to search resources
   Resource type: the type of the resource (generic, instance, disk, ...)
@@ -68,7 +81,7 @@ The editor have 4 modes to retreives metrics, you can change the mode by clickin
 * Aggregated measurements of a metric across resources:
   Create one graph with an aggregation of all datapoints of metrics that match the query.
 
-  ![](/img/v2/gnocchi_query_mode4.png)
+  ![](docs/gnocchi_query_mode4.png)
 
   Query: the query to search resources
   Resource type: the type of the resource (generic, instance, disk, ...)
@@ -81,7 +94,8 @@ For details of `Query` format, please refer to the Gnocchi documentations.
 
 - [Search for resource - Gnocchi Documentation](http://docs.openstack.org/developer/gnocchi/rest.html#searching-for-resources).
 
-## Templated queries
+Templated queries
+=================
 Gnocchi Datasource Plugin provides following functions in `Variables values query` field in Templating Editor.
 
 Name | Description
@@ -92,3 +106,19 @@ Name | Description
 For details of `query` format, please refer to the Gnocchi documentations.
 
 - [Searching for resources - Gnocchi documentation](http://docs.openstack.org/developer/gnocchi/rest.html#searching-for-resources).
+
+Current Limitation
+==================
+
+Grafana doesn’t allow to query two different servers when using the proxy mode,
+so we are not able to query Keystone for a token and then query gnocchi.
+
+In proxymode, we need to set a token and the Gnocchi URL on the datasource.
+
+In direct mode, we can use login/password and the Keystone URL.
+Note that CORS MUST be enabled on Keystone and Gnocchi servers.
+
+License
+=======
+
+APACHE LICENSE Version 2.0, January 2004
