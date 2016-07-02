@@ -1,6 +1,6 @@
 ///<reference path="../typings/index.d.ts" />
 
-export class GnocchiDatasourceQueryCtrl  {
+export class GnocchiDatasourceQueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
   // This is a copy of QueryCtrl interface
@@ -14,6 +14,9 @@ export class GnocchiDatasourceQueryCtrl  {
   // local stuffs
   aggregators: any;
   queryModes: any;
+  suggestResourceIDs: any;
+  suggestMetricIDs: any;
+  suggestMetricNames: any;
 
   constructor(public $scope, private $injector) {
     this.$scope = $scope;
@@ -45,6 +48,17 @@ export class GnocchiDatasourceQueryCtrl  {
     this.target.validQuery = false;
     this.target.queryError = 'No query';
 
+    this.suggestResourceIDs = (query, callback) => {
+      this.datasource.performSuggestQuery(query, 'resources', this.target).then(callback);
+    };
+    this.suggestMetricIDs = (query, callback)  => {
+      this.datasource.performSuggestQuery(query, 'metrics', this.target).then(callback);
+    };
+
+    this.suggestMetricNames = (query, callback) => {
+      this.datasource.performSuggestQuery(query, 'metric_names', this.target).then(callback);
+    };
+
     this.queryUpdated();
   }
 
@@ -52,28 +66,10 @@ export class GnocchiDatasourceQueryCtrl  {
     this.panelCtrl.refresh();
   }
 
-  suggestResourceIDs(query, callback) {
-    this.datasource
-      .performSuggestQuery(query, 'resources', this.target)
-      .then(callback);
-  }
-
   queryUpdated() {
     this.target.queryError = this.datasource.validateTarget(this.target, false);
     this.target.validQuery = !this.target.queryError;
     this.refresh();
-  }
-
-  suggestMetricIDs(query, callback) {
-    this.datasource
-      .performSuggestQuery(query, 'metrics', this.target)
-      .then(callback);
-  }
-
-  suggestMetricNames(query, callback) {
-    this.datasource
-      .performSuggestQuery(query, 'metric_names', this.target)
-      .then(callback);
   }
 
   // QueryCTRL stuffs
