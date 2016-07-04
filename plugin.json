@@ -16,6 +16,10 @@
       "name": "Mehdi ABAAKOUK",
       "url": "https://github.com/sileht"
     },
+    "logos": {
+        "small": "docs/gnocchi-logo.jpg",
+        "large": "docs/gnocchi-logo.jpg"
+    },
     "links": [
       {"name": "GitHub", "url": "https://github.com/sileht/grafana-datasource-gnocchi"},
       {"name": "Gnocchi", "url": "http://gnocchi.xyz"},
