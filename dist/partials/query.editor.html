@@ -1,0 +1,49 @@
+<query-editor-row query-ctrl="ctrl" can-collapse="false" has-text-edit-mode="false">
+    <div class="gf-form-inline">
+        <div class="gf-form">
+            <label class="gf-form-label query-keyword width-8">QUERY TYPE</label>
+            <div class="gf-form-select-wrapper">
+                <select class="gf-form-input gf-size-auto" ng-model="ctrl.target.queryMode" ng-options="f.value as f.text for f in ctrl.queryModes" ng-change="ctrl.queryUpdated()"></select>
+            </div>
+        </div>
+        <div class="gf-form">
+            <label class="gf-form-label">
+                    <i ng-if="ctrl.target.validQuery" class="fa fa-check"></i>
+                    <i ng-if="!ctrl.target.validQuery" class="fa fa-exclamation"></i>&nbsp;&nbsp;
+                    <span class="text-error" ng-if="!ctrl.target.validQuery"> {{ctrl.target.queryError}} </span>
+            </label>
+        </div>
+    </div>
+    <div ng-if="['resource_search', 'resource_aggregation'].indexOf(ctrl.target.queryMode) >= 0" class="gf-form-inline">
+        <div class="gf-form max-width">
+            <label class="gf-form-label query-keyword width-8">Query</label>
+            <input type="text" class="gf-form-input" ng-model="ctrl.target.resource_search" spellcheck='false' placeholder="json query" data-min-length=0 ng-model-onblur ng-blur="ctrl.queryUpdated()" >
+        </div>
+    </div>
+    <div class="gf-form-inline">
+        <div class="gf-form max-width-30" ng-if="['resource'].indexOf(ctrl.target.queryMode) >= 0">
+            <label class="gf-form-label query-keyword width-8">Resource ID</label>
+            <input type="text" class="gf-form-input" ng-model="ctrl.target.resource_id" bs-typeahead="ctrl.suggestResourceIDs" spellcheck='false' placeholder="resource id" data-min-length=0 ng-model-onblur ng-blur="ctrl.queryUpdated()">
+        </div>
+        <div class="gf-form max-width-30" ng-if="['metric'].indexOf(ctrl.target.queryMode) >= 0">
+            <label class="gf-form-label query-keyword width-8">Metric ID</label>
+            <input type="text" class="gf-form-input" ng-model="ctrl.target.metric_id" bs-typeahead="ctrl.suggestMetricIDs" spellcheck='false' placeholder="metric id" data-min-length=0 ng-model-onblur ng-blur="ctrl.queryUpdated()">
+        </div>
+        <div class="gf-form max-width-20" ng-if="['resource', 'resource_search', 'resource_aggregation'].indexOf(ctrl.target.queryMode) >= 0">
+            <label class="gf-form-label query-keyword width-8">Resource type</label>
+            <input type="text" class="gf-form-input" ng-model="ctrl.target.resource_type" spellcheck='false' placeholder="generic" data-min-length=0 ng-model-onblur ng-blur="ctrl.queryUpdated()">
+        </div>
+        <div class="gf-form max-width-20" ng-if="['resource', 'resource_search', 'resource_aggregation'].indexOf(ctrl.target.queryMode) >= 0">
+            <label class="gf-form-label query-keyword width-8">Metric name</label>
+            <input type="text" class="gf-form-input" ng-model="ctrl.target.metric_name" bs-typeahead="ctrl.suggestMetricNames" spellcheck='false' placeholder="metric name" data-min-length=0 ng-model-onblur ng-blur="ctrl.queryUpdated()">
+        </div>
+        <div class="gf-form">
+            <label class="gf-form-label query-keyword width-8">Aggregator</label>
+            <select ng-model="ctrl.target.aggregator" class="gf-form-input input-small" ng-options="a for a in ctrl.aggregators" ng-change="ctrl.queryUpdated()"> </select>
+        </div>
+        <div class="gf-form max-width-20" ng-if="['resource', 'resource_search', 'resource_aggregation'].indexOf(ctrl.target.queryMode) >= 0" >
+            <label class="gf-form-label query-keyword width-8">Label <span ng-if="target.queryMode !== 'resource_aggregation'">attribute</span></label>
+            <input type="text" class="gf-form-input" ng-model="ctrl.target.label" spellcheck='false' placeholder="id" data-min-length=0 ng-model-onblur ng-blur="ctrl.queryUpdated()">
+        </div>
+    </div>
+</query-editor-row>
