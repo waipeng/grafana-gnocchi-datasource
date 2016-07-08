@@ -2,9 +2,9 @@
 
 Gnocchi datasource for Grafana 3.x
 
-## Installation via grafana.net (Coming soon)
+## Installation via grafana.net
 
-    $ sudo grafana-cli plugins install grafana-gnocchi-datasource
+    $ sudo grafana-cli plugins install sileht-gnocchi-datasource
 
 
 ## Installation from sources

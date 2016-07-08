@@ -2,7 +2,7 @@
 
   "name": "Gnocchi",
   "type": "datasource",
-  "id": "grafana-gnocchi-datasource",
+  "id": "sileht-gnocchi-datasource",
 
   "defaultMatchFormat": "glob",
   "metrics": true,
@@ -27,7 +27,7 @@
     ],
     "screenshots": [
     ],
-    "version": "1.0.1",
+    "version": "1.0.2",
     "updated": "2016-07-04"
   },
 

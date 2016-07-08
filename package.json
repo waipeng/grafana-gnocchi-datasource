@@ -1,7 +1,7 @@
 {
-  "name": "gnocchi-datasource",
+  "name": "sileht-gnocchi-datasource",
   "private": true,
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Grafana datasource for Gnocchi",
   "repository": {
     "type": "git",
