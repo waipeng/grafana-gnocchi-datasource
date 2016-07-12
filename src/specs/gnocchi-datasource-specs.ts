@@ -19,7 +19,7 @@ describe('GnocchiDatasource', function() {
     $httpBackend = $injector.get('$httpBackend');
     backendSrv = new BackendSrvMock($injector.get('$http'));
     templateSrv = new TemplateSrvMock();
-    ds = new Datasource({url: [''], jsonData: {token: 'XXXXXXXXXXXXX'} },
+    ds = new Datasource({url: [''], jsonData: {token: 'XXXXXXXXXXXXX', 'mode': 'token'} },
                          $q, backendSrv, templateSrv);
   }));
 
@@ -34,10 +34,8 @@ describe('GnocchiDatasource', function() {
       targets: targets,
       interval: '1s'
     };
-    var headers = {"X-Auth-Token": "XXXXXXXXXXXXX", "Accept": "application/json, text/plain, */*"};
-    //if (data) {
-      headers["Content-Type"] = "application/json";
-    //}
+    var headers = {"X-Auth-Token": "XXXXXXXXXXXXX", "Accept": "application/json, text/plain, */*",
+                   "Content-Type": "application/json"};
 
     it('should return series list', angular.mock.inject(function() {
       if (pre_assert) {
@@ -216,14 +214,14 @@ describe('GnocchiDatasource', function() {
     beforeEach(function() {
       ds = new Datasource({
         'url': 'http://localhost:5000',
-        'jsonData': {'username': 'user', 'project': 'proj', 'password': 'pass'}
+        'jsonData': {'mode': 'keystone', 'username': 'user', 'project': 'proj', 'password': 'pass', 'domain': 'foo'}
       }, $q, backendSrv, templateSrv);
 
       $httpBackend.expect(
         'POST', "http://localhost:5000/v3/auth/tokens",
         {"auth": { "identity": { "methods": ["password"],
-          "password": { "user": { "name": "user", "password": "pass", "domain": { "id": "default"}}}},
-          "scope": { "project": { "domain": { "id": "default" }, "name": "proj"}}}},
+          "password": { "user": { "name": "user", "password": "pass", "domain": { "id": "foo"}}}},
+          "scope": { "project": { "domain": { "id": "foo" }, "name": "proj"}}}},
           {'Content-Type': 'application/json', "Accept": "application/json, text/plain, */*"}
       ).respond({'token': {'catalog': [{'type': 'metric', 'endpoints':
         [{'url': 'http://localhost:8041/', 'interface': 'public'}]}]}}, {'X-Subject-Token': 'foobar'});

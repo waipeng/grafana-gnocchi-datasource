@@ -7,9 +7,11 @@ export default class GnocchiDatasource {
     type: string;
     supportMetrics: boolean;
     default_headers: any;
+    domain: string;
     project: string;
     username: string;
     password: string;
+    roles: string;
     url: string;
     keystone_endpoint: string;
 
@@ -28,16 +30,31 @@ export default class GnocchiDatasource {
         self.project = instanceSettings.jsonData.project;
         self.username = instanceSettings.jsonData.username;
         self.password = instanceSettings.jsonData.password;
-        self.default_headers['X-Auth-Token'] = instanceSettings.jsonData.token;
+        self.roles = instanceSettings.jsonData.roles;
+        self.domain = instanceSettings.jsonData.domain;
+        if (self.domain === undefined || self.domain === "") {
+          self.domain = 'default';
+        }
+        if (self.roles === undefined || self.roles === "") {
+          self.roles = 'admin';
+        }
       }
 
       // If the URL starts with http, we are in direct mode
-      if (instanceSettings.url.indexOf('http') === 0){
+      if (instanceSettings.jsonData.mode === "keystone"){
         self.url = null;
         self.keystone_endpoint = self.sanitize_url(instanceSettings.url);
+      } else if (instanceSettings.jsonData.mode === "token"){
+        self.url = self.sanitize_url(instanceSettings.url);
+        self.keystone_endpoint = null;
+        self.default_headers['X-Auth-Token'] = instanceSettings.jsonData.token;
       } else {
         self.url = self.sanitize_url(instanceSettings.url);
         self.keystone_endpoint = null;
+        self.default_headers['X-Project-Id'] = self.project;
+        self.default_headers['X-User-Id'] = self.username;
+        self.default_headers['X-Domain-Id'] = self.domain;
+        self.default_headers['X-Roles'] = self.roles;
       }
     }
 
@@ -414,13 +431,13 @@ export default class GnocchiDatasource {
                 "user": {
                   "name": self.username,
                   "password": self.password,
-                  "domain": { "id": "default"  }
+                  "domain": { "id": self.domain  }
                 }
               }
             },
             "scope": {
               "project": {
-                "domain": { "id": "default" },
+                "domain": { "id": self.domain },
                 "name": self.project,
               }
             }
