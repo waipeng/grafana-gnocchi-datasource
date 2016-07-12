@@ -49,7 +49,8 @@ var GnocchiDatasource = (function () {
     ////////////////
     GnocchiDatasource.prototype.query = function (options) {
         var self = this;
-        var promises = _.map(options.targets, function (target) {
+        var targets = _.filter(options.targets, function (target) { return !target.hide; });
+        var promises = _.map(targets, function (target) {
             // Ensure target is valid
             var default_measures_req = {
                 url: null,
