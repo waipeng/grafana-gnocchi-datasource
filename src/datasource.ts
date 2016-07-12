@@ -141,41 +141,33 @@ export default class GnocchiDatasource {
       var self = this;
       return self._gnocchi_request(reqs).then(function(result) {
         var dps = [];
-        var fill_with_zero = true;
         var last_granularity;
         var last_timestamp;
         var last_value;
         // NOTE(sileht): sample are ordered by granularity, then timestamp.
-        _.each(result, function(metricData) {
+        _.each(_.toArray(result).reverse(), function(metricData) {
           var granularity = metricData[1];
           var timestamp = moment(metricData[0], moment.ISO_8601);
           var value = metricData[2];
 
-          if (!fill_with_zero) {
-            dps.push([value, timestamp.valueOf()]);
-          } else {
-            if (last_timestamp !== undefined){
-              // We got a more precise granularity
-              if (last_timestamp.valueOf() >= timestamp.valueOf()){
-                return;
-              }
-              var c_timestamp = last_timestamp;
-              while (c_timestamp.valueOf() < timestamp.valueOf()) {
-                dps.push([last_value, c_timestamp.valueOf()]);
-                c_timestamp.add(last_granularity, "seconds");
-                last_granularity = granularity;
-                last_value = 0;
-              }
+          if (last_timestamp !== undefined){
+            // We have a more precise granularity
+            if (timestamp.valueOf() >= last_timestamp.valueOf()){
+              return;
             }
-            last_timestamp = timestamp;
-            last_granularity = granularity;
-            last_value = value;
+            var c_timestamp = last_timestamp;
+            c_timestamp.subtract(last_granularity, "seconds");
+            while (timestamp.valueOf() < c_timestamp.valueOf()) {
+              dps.push([0, c_timestamp.valueOf()]);
+              c_timestamp.subtract(last_granularity, "seconds");
+            }
           }
-        });
-        if (fill_with_zero && last_timestamp) {
+          last_timestamp = timestamp;
+          last_granularity = granularity;
+          last_value = value;
           dps.push([last_value, last_timestamp.valueOf()]);
-        }
-        return { target: name, datapoints: dps };
+        });
+        return { target: name, datapoints: _.toArray(dps).reverse() };
       });
     }
 
