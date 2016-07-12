@@ -16,16 +16,32 @@ var GnocchiDatasource = (function () {
             self.project = instanceSettings.jsonData.project;
             self.username = instanceSettings.jsonData.username;
             self.password = instanceSettings.jsonData.password;
-            self.default_headers['X-Auth-Token'] = instanceSettings.jsonData.token;
+            self.roles = instanceSettings.jsonData.roles;
+            self.domain = instanceSettings.jsonData.domain;
+            if (self.domain === undefined || self.domain === "") {
+                self.domain = 'default';
+            }
+            if (self.roles === undefined || self.roles === "") {
+                self.roles = 'admin';
+            }
         }
         // If the URL starts with http, we are in direct mode
-        if (instanceSettings.url.indexOf('http') === 0) {
+        if (instanceSettings.jsonData.mode === "keystone") {
             self.url = null;
             self.keystone_endpoint = self.sanitize_url(instanceSettings.url);
+        }
+        else if (instanceSettings.jsonData.mode === "token") {
+            self.url = self.sanitize_url(instanceSettings.url);
+            self.keystone_endpoint = null;
+            self.default_headers['X-Auth-Token'] = instanceSettings.jsonData.token;
         }
         else {
             self.url = self.sanitize_url(instanceSettings.url);
             self.keystone_endpoint = null;
+            self.default_headers['X-Project-Id'] = self.project;
+            self.default_headers['X-User-Id'] = self.username;
+            self.default_headers['X-Domain-Id'] = self.domain;
+            self.default_headers['X-Roles'] = self.roles;
         }
     }
     ////////////////
@@ -42,11 +58,14 @@ var GnocchiDatasource = (function () {
                 params: {
                     'aggregation': target.aggregator,
                     'start': options.range.from.toISOString(),
-                    'end': null
+                    'end': null,
+                    'stop': null
                 }
             };
             if (options.range.to) {
+                // NOTE(sileht): Gnocchi API looks inconsistente
                 default_measures_req.params.end = options.range.to.toISOString();
+                default_measures_req.params.stop = options.range.to.toISOString();
             }
             var error = self.validateTarget(target, true);
             if (error) {
@@ -94,7 +113,7 @@ var GnocchiDatasource = (function () {
                 default_measures_req.url = ('v1/aggregation/resource/' +
                     resource_type + '/metric/' + metric_name);
                 default_measures_req.method = 'POST';
-                default_measures_req.data = target.resource_search;
+                default_measures_req.data = resource_search;
                 return self._retrieve_measures(label || "unlabeled", default_measures_req);
             }
             else if (target.queryMode === "resource") {
@@ -398,13 +417,13 @@ var GnocchiDatasource = (function () {
                             "user": {
                                 "name": self.username,
                                 "password": self.password,
-                                "domain": { "id": "default" }
+                                "domain": { "id": self.domain }
                             }
                         }
                     },
                     "scope": {
                         "project": {
-                            "domain": { "id": "default" },
+                            "domain": { "id": self.domain },
                             "name": self.project,
                         }
                     }
