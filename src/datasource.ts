@@ -64,8 +64,8 @@ export default class GnocchiDatasource {
 
     query(options: any) {
       var self = this;
-
-      var promises = _.map(options.targets, function(target: any) {
+      var targets = _.filter(options.targets, function(target: any) { return !target.hide; });
+      var promises = _.map(targets, function(target: any){
         // Ensure target is valid
         var default_measures_req = {
           url: null,
