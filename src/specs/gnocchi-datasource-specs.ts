@@ -90,7 +90,7 @@ describe('GnocchiDatasource', function() {
       [{ queryMode: 'resource', resource_type:   'instance', resource_id: 'my_uuid', metric_name: 'cpu_util', aggregator: 'max' }],
       'GET',
       "/v1/resource/instance/my_uuid/metric/cpu_util/measures?" +
-        "aggregation=max&end=2014-04-20T03:20:10.000Z&start=2014-04-10T03:20:10.000Z",
+        "aggregation=max&end=2014-04-20T03:20:10.000Z&start=2014-04-10T03:20:10.000Z&stop=2014-04-20T03:20:10.000Z",
       null,
       '6868da77-fa82-4e67-aba9-270c5ae8cbca', function() {
           $httpBackend.expect("GET", "/v1/resource/instance/my_uuid").respond({
@@ -104,7 +104,8 @@ describe('GnocchiDatasource', function() {
     assert_simple_test(
       [{ queryMode: 'metric', metric_id: 'my_uuid', aggregator: 'max' }],
       'GET',
-      '/v1/metric/my_uuid/measures?aggregation=max&end=2014-04-20T03:20:10.000Z&start=2014-04-10T03:20:10.000Z',
+      '/v1/metric/my_uuid/measures?aggregation=max&end=2014-04-20T03:20:10.000Z&start=2014-04-10T03:20:10.000Z' +
+      '&stop=2014-04-20T03:20:10.000Z',
       null,
       'my_uuid', null, null);
   });
@@ -115,7 +116,7 @@ describe('GnocchiDatasource', function() {
         resource_type: 'instance', label: 'my_aggregation', metric_name: 'cpu_util', aggregator: 'max' }],
       'POST',
       "/v1/aggregation/resource/instance/metric/cpu_util?" +
-        "aggregation=max&end=2014-04-20T03:20:10.000Z&start=2014-04-10T03:20:10.000Z",
+        "aggregation=max&end=2014-04-20T03:20:10.000Z&start=2014-04-10T03:20:10.000Z&stop=2014-04-20T03:20:10.000Z",
       {"=": {"server_group": "autoscalig_group"}},
       'my_aggregation', null, null);
   });
@@ -149,7 +150,7 @@ describe('GnocchiDatasource', function() {
     ];
 
     var url_expected_get_measures1 = "/v1/resource/instance/6868da77-fa82-4e67-aba9-270c5ae8cbca/metric/cpu_util/measures?" +
-      "aggregation=max&end=2014-04-20T03:20:10.000Z&start=2014-04-10T03:20:10.000Z";
+      "aggregation=max&end=2014-04-20T03:20:10.000Z&start=2014-04-10T03:20:10.000Z&stop=2014-04-20T03:20:10.000Z";
     var response_get_measures1 = [
       ["2014-10-06T14:33:57", "60.0", "43.1"],
       ["2014-10-06T14:34:12", "60.0", "12"],
@@ -157,7 +158,7 @@ describe('GnocchiDatasource', function() {
     ];
 
     var url_expected_get_measures2 = "/v1/resource/instance/f898ba55-bbea-460f-985c-3d1243348304/metric/cpu_util/measures?" +
-      "aggregation=max&end=2014-04-20T03:20:10.000Z&start=2014-04-10T03:20:10.000Z";
+      "aggregation=max&end=2014-04-20T03:20:10.000Z&start=2014-04-10T03:20:10.000Z&stop=2014-04-20T03:20:10.000Z";
     var response_get_measures2 = [
       ["2014-10-06T14:33:57", "60.0", "22.1"],
       ["2014-10-06T14:34:12", "60.0", "3"],

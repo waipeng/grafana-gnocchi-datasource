@@ -57,11 +57,14 @@ export default class GnocchiDatasource {
           params: {
             'aggregation': target.aggregator,
             'start': options.range.from.toISOString(),
-            'end': null
+            'end': null,
+            'stop': null
           }
         };
         if (options.range.to){
+          // NOTE(sileht): Gnocchi API looks inconsistente
           default_measures_req.params.end = options.range.to.toISOString();
+          default_measures_req.params.stop = options.range.to.toISOString();
         }
 
         var error = self.validateTarget(target, true);
@@ -109,7 +112,7 @@ export default class GnocchiDatasource {
           default_measures_req.url = ('v1/aggregation/resource/' +
                                       resource_type + '/metric/' + metric_name);
           default_measures_req.method = 'POST';
-          default_measures_req.data = target.resource_search;
+          default_measures_req.data = resource_search;
           return self._retrieve_measures(label || "unlabeled", default_measures_req);
 
         } else if (target.queryMode === "resource") {
