@@ -183,10 +183,6 @@ export default class GnocchiDatasource {
             }
             var c_timestamp = last_timestamp;
             c_timestamp.subtract(last_granularity, "seconds");
-            while (timestamp.valueOf() < c_timestamp.valueOf()) {
-              dps.push([0, c_timestamp.valueOf()]);
-              c_timestamp.subtract(last_granularity, "seconds");
-            }
           }
           last_timestamp = timestamp;
           last_granularity = granularity;
