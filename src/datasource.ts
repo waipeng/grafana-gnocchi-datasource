@@ -44,6 +44,9 @@ export default class GnocchiDatasource {
       if (instanceSettings.jsonData.mode === "keystone"){
         self.url = null;
         self.keystone_endpoint = self.sanitize_url(instanceSettings.url);
+        if (instanceSettings.jsonData.endpoint !== undefined) {
+          self.url = self.sanitize_url(instanceSettings.jsonData.endpoint);
+        }
       } else if (instanceSettings.jsonData.mode === "token"){
         self.url = self.sanitize_url(instanceSettings.url);
         self.keystone_endpoint = null;
@@ -453,7 +456,9 @@ export default class GnocchiDatasource {
           if (service['type'] === 'metric') {
             _.each(service['endpoints'], function(endpoint) {
               if (endpoint['interface'] === 'public') {
-                self.url = self.sanitize_url(endpoint['url']);
+                if (self.url === null) {
+                  self.url = self.sanitize_url(endpoint['url']);
+                }
               }
             });
           }

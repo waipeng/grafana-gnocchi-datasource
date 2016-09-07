@@ -19,6 +19,15 @@
             </div>
         </div>
     </div>
+    <div class="gf-form-inline">
+        <div class="gf-form max-width-30">
+            <span class="gf-form-label width-7">Endpoint</span>
+            <input type="text" class="tight-form-input input-xlarge" ng-model='ctrl.current.jsonData.endpoint' placeholder=""></input>
+                <info-popover mode="right-absolute">
+                    Leave blank to use gnocchi endpoint from catalog
+                </info-popover>
+        </div>
+    </div>
     <div style="padding:5px">
         <span ng-if="ctrl.current.access == 'direct' && ctrl.current.jsonData.mode == 'keystone'">The Keystone URL is expected in Http settings</span>
         <span ng-if="ctrl.current.access == 'proxy' && ctrl.current.jsonData.mode == 'keystone'">This configuration can't works, select another 'Access' or 'Auth Mode'</span>
